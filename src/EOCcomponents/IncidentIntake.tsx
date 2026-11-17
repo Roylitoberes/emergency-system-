@@ -161,7 +161,7 @@ function parseSMSAddress(text: string): string | null {
 }
 
 // ✅ Normalize incident type for clean dashboard display
-function normalizeIncidentType(raw?: string, specific?: string): string {
+function normalizeIncidentType(raw?: string, specific?: string | null): string {
   if (!raw && !specific) return 'Incident';
   const s = String(raw || '').toLowerCase();
   if (s.includes('fire')) return 'Fire';

@@ -462,7 +462,7 @@ const GoogleMap: React.FC<GoogleMapProps> = ({
             const rawPoints = Array.isArray(data.points) ? data.points : [];
             const points: [number, number][] = rawPoints
               .map((p: any) => [Number(p.lat), Number(p.lng)] as [number, number])
-              .filter(([a, b]) =>
+              .filter(([a, b]: [number, number]) =>
                 Number.isFinite(a) &&
                 Number.isFinite(b) &&
                 !(a === 0 && b === 0)

@@ -335,7 +335,7 @@ const usePublishedRoutes = () => {
             const points: [number, number][] = rawPoints
               .map((p: any) => [Number(p.lat), Number(p.lng)] as [number, number])
               .filter(
-                ([a, b]) =>
+                ([a, b]: [number, number]) =>
                   Number.isFinite(a) &&
                   Number.isFinite(b) &&
                   !(a === 0 && b === 0)
@@ -3127,11 +3127,12 @@ const MonitorIncidentStatus: React.FC<MonitorIncidentStatusProps> = ({
 
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
-      matchesSearch =
+      matchesSearch = !!(
         incident.id.toLowerCase().includes(searchLower) ||
         incident.location?.toLowerCase().includes(searchLower) ||
         incident.title.toLowerCase().includes(searchLower) ||
-        incident.description?.toLowerCase().includes(searchLower);
+        incident.description?.toLowerCase().includes(searchLower)
+      );
     }
 
     return matchesStatus && matchesType && matchesSearch;
