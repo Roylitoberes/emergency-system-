@@ -1,0 +1,1131 @@
+/* ============================================================
+   cdrrmo.css — Dark navy page + WHITE (light) sign-in card
+   - Same class names as before → TSX logic untouched
+   - Page, branding panel, loading screen and modals stay dark navy
+   - ONLY .meridian-form-card is light (see "FORM CARD" section)
+   - Sign in button = page navy, Forgot password = red
+   - ALL text uses Inter
+   ============================================================ */
+
+   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+   /* ============================================================
+      TOKENS (dark page)
+      ============================================================ */
+   :root {
+     --nm-bg: #0B1938;
+   
+     --nm-ink: #EEF1FB;
+     --nm-ink-soft: #9AA7CC;
+     --nm-ink-faint: #6F7DA8;
+   
+     --nm-indigo: #5B52D9;
+     --nm-indigo-deep: #4A41C4;
+     --nm-indigo-ink: #A5ADFF;
+     --nm-gold: #D9A84E;
+     --nm-danger: #FF7B7B;
+     --nm-success: #4ADE80;
+   
+     --nm-dark: #050D22;
+     --nm-light: #15296A;
+   
+     --nm-raised-lg: 1rem 1.125rem 2.375rem var(--nm-dark), -1rem -1rem 2.5rem var(--nm-light);
+     --nm-raised-md: 0.625rem 0.75rem 1.625rem var(--nm-dark), -0.75rem -0.75rem 1.75rem var(--nm-light);
+     --nm-raised-sm: 0.3125rem 0.3125rem 0.6875rem var(--nm-dark), -0.3125rem -0.3125rem 0.6875rem var(--nm-light);
+     --nm-inset-md: inset 0.3125rem 0.3125rem 0.625rem var(--nm-dark), inset -0.3125rem -0.3125rem 0.625rem var(--nm-light);
+     --nm-inset-sm: inset 0.1875rem 0.1875rem 0.375rem var(--nm-dark), inset -0.1875rem -0.1875rem 0.375rem var(--nm-light);
+   
+     --nm-ease: cubic-bezier(0.4, 0, 0.2, 1);
+     --nm-dur: 2500ms;
+   
+     /* Viewport-scaled sizes */
+     --nm-tile: 12.5rem;
+     --nm-field-h: 3.25rem;
+   }
+   
+   
+   /* ============================================================
+      RESPONSIVE SCALING — one rule makes the whole UI scale.
+      Everything is sized in rem, so a laptop, a big monitor and a TV
+      all show the SAME layout, just larger or smaller.
+      Reference design = 1280 x 610 viewport  →  1rem = 16px.
+      ============================================================ */
+   html {
+     font-size: max(9px, min(1.25vw, 2.623vh));
+     background: #0B1938;
+   }
+   
+   #root {
+     background: #0B1938;
+   }
+   
+   @media (max-width: 760px) {
+     html { font-size: 16px; }
+   }
+   
+   * {
+     margin: 0;
+     padding: 0;
+     box-sizing: border-box;
+     -webkit-user-select: none;
+     user-select: none;
+   }
+   
+   body {
+     font-family: 'Inter', sans-serif;
+     overflow: hidden;
+     height: 100vh;
+     background: var(--nm-bg);
+   }
+   
+   /* ============================================================
+      STAGE
+      ============================================================ */
+   .meridian-stage {
+     position: relative;
+     width: 100vw;
+     height: 100vh;
+     overflow: hidden;
+     border-radius: 0;
+     background: var(--nm-bg);
+   }
+   
+   /* ============================================================
+      DASHBOARD PREVIEW (revealed after slide-apart)
+      ============================================================ */
+   .meridian-dashboard-preview {
+     position: absolute;
+     inset: 0;
+     background: var(--nm-bg);
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     z-index: 1;
+     opacity: 0;
+     transform: scale(0.98);
+     transition: opacity 1200ms var(--nm-ease), transform 1200ms var(--nm-ease);
+   }
+   
+   .meridian-stage.transitioning .meridian-dashboard-preview {
+     opacity: 1;
+     transform: scale(1);
+     transition-delay: 1200ms;
+   }
+   
+   .dashboard-preview-content {
+     text-align: center;
+     color: var(--nm-ink);
+   }
+   
+   .dashboard-preview-logo {
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     gap: 0.75rem;
+     font-family: 'Inter', sans-serif;
+     font-size: 2rem;
+     font-weight: 700;
+     letter-spacing: 0.25rem;
+     color: var(--nm-ink);
+     margin-bottom: 2rem;
+   }
+   
+   .dashboard-preview-logo svg {
+     width: 2.5rem;
+     height: 2.5rem;
+   }
+   
+   .dashboard-preview-loader {
+     display: flex;
+     flex-direction: column;
+     align-items: center;
+     gap: 1.125rem;
+   }
+   
+   .preview-spinner {
+     width: 2.875rem;
+     height: 2.875rem;
+     border: 0.25rem solid transparent;
+     border-top-color: var(--nm-indigo);
+     border-radius: 50%;
+     box-shadow: var(--nm-inset-sm);
+     animation: meridian-spin 700ms linear infinite;
+   }
+   
+   .dashboard-preview-loader p {
+     font-family: 'Inter', sans-serif;
+     font-size: 0.9375rem;
+     color: var(--nm-ink-soft);
+     margin: 0;
+   }
+   
+   /* ============================================================
+      LOGIN LAYER — 2500ms slide
+      ============================================================ */
+   .meridian-login-layer {
+     position: absolute;
+     inset: 0;
+     display: flex;
+     z-index: 10;
+   }
+   
+   .meridian-panel {
+     height: 100%;
+     width: 50%;
+     background: var(--nm-bg);
+     transition: transform var(--nm-dur) var(--nm-ease);
+     will-change: transform;
+   }
+   
+   .meridian-stage.transitioning .meridian-panel-brand {
+     transform: translateX(-100%);
+   }
+   
+   .meridian-stage.transitioning .meridian-panel-form {
+     transform: translateX(100%);
+   }
+   
+   /* ============================================================
+      LEFT PANEL — Branding
+      Background stays dark navy; only the logo tile and the
+      PORTAL badge are white (see below).
+      ============================================================ */
+   .meridian-panel-brand {
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     position: relative;
+     overflow: hidden;
+   }
+   
+   .meridian-brand-content {
+     text-align: center;
+     padding: 0 2.5rem;
+     position: relative;
+     z-index: 2;
+   }
+   
+   /* BIG logo tile */
+   .meridian-brand-mark {
+     width: var(--nm-tile);
+     height: var(--nm-tile);
+     margin: 0 auto 1.5rem;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     border: none;
+     border-radius: 26%;
+     background: #F4F6FD;
+     box-shadow: 0 1rem 2.5rem rgba(2, 6, 20, 0.6);
+     padding: 4%;
+   }
+   
+   .meridian-brand-logo {
+     width: 100%;
+     height: 100%;
+     object-fit: contain;
+     filter: none;
+   }
+   
+   .meridian-brand-name {
+     font-family: 'Inter', sans-serif;
+     font-size: 2.75rem;
+     font-weight: 700;
+     color: var(--nm-ink);
+     letter-spacing: 0.25em;
+     padding-left: 0.25em; /* balances trailing letter-spacing */
+     margin: 0 0 0.625rem;
+     line-height: 1.1;
+   }
+   
+   .meridian-brand-city {
+     font-family: 'Inter', sans-serif;
+     font-size: 0.875rem;
+     font-weight: 500;
+     color: var(--nm-gold);
+     letter-spacing: 0.62em;
+     padding-left: 0.62em;
+     margin: 0 0 1.125rem;
+   }
+   
+   .meridian-brand-badge {
+     display: inline-block;
+     padding: 0.55em 2.4em 0.55em 3em;
+     background: #F4F6FD;
+     border: none;
+     border-radius: 1.5rem;
+     box-shadow: 0 0.5rem 1.25rem rgba(2, 6, 20, 0.5);
+     font-family: 'Inter', sans-serif;
+     font-size: 0.75rem;
+     font-weight: 600;
+     color: #5E678F;
+     letter-spacing: 0.5em;
+     margin-bottom: 1rem;
+   }
+   
+   .meridian-brand-tagline {
+     font-family: 'Inter', sans-serif;
+     font-size: 1rem;
+     font-weight: 500;
+     color: var(--nm-ink-soft);
+     letter-spacing: 0.0187rem;
+     margin: 0;
+   }
+   
+   /* Not part of this design */
+   .meridian-brand-subtagline,
+   .meridian-brand-footer {
+     display: none;
+   }
+   
+   /* ============================================================
+      RIGHT PANEL — Form (page area stays dark)
+      ============================================================ */
+   .meridian-panel-form {
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     overflow-y: auto;
+     position: relative;
+     padding: 1.5rem;
+   }
+   
+   /* ============================================================
+      FORM CARD — WHITE / light surface (the only light part)
+      Everything inside the card uses these local light tokens.
+      The shadow tokens are redefined here because they were
+      computed with the dark colors at :root.
+      ============================================================ */
+   .meridian-form-card {
+     --nm-bg: #E6EAF7;
+   
+     --nm-ink: #1B2150;
+     --nm-ink-soft: #5E678F;
+     --nm-ink-faint: #8A92B5;
+   
+     --nm-indigo-ink: #4F46C1;
+     --nm-danger: #D93636;
+     --nm-success: #16A34A;
+   
+     --nm-dark: #BCC4DE;
+     --nm-light: #FFFFFF;
+   
+     --nm-raised-sm: 0.3125rem 0.3125rem 0.6875rem var(--nm-dark), -0.3125rem -0.3125rem 0.6875rem var(--nm-light);
+     --nm-inset-md: inset 0.3125rem 0.3125rem 0.625rem var(--nm-dark), inset -0.3125rem -0.3125rem 0.625rem var(--nm-light);
+     --nm-inset-sm: inset 0.1875rem 0.1875rem 0.375rem var(--nm-dark), inset -0.1875rem -0.1875rem 0.375rem var(--nm-light);
+   
+     position: relative;
+     z-index: 1;
+     width: 100%;
+     max-width: 27.5rem;
+     padding: 1.875rem 2.25rem 1.5rem;
+     background: var(--nm-bg);
+     border: none;
+     border-radius: 2rem;
+     /* the card sits on a dark page, so it gets a dark drop shadow */
+     box-shadow: 0 1.5rem 3.5rem rgba(2, 6, 20, 0.6);
+   }
+   
+   .meridian-form-card .meridian-input {
+     color-scheme: light;
+   }
+   
+   .meridian-form-title {
+     font-family: 'Inter', sans-serif;
+     font-size: 1.875rem;
+     font-weight: 700;
+     color: var(--nm-ink);
+     margin: 0 0 1.125rem;
+     line-height: 1.15;
+   }
+   
+   .meridian-form-desc {
+     display: none;
+   }
+   
+   /* ============================================================
+      INPUTS — pressed in
+      ============================================================ */
+   .meridian-input-group {
+     margin-bottom: 1.0625rem;
+   }
+   
+   .meridian-input-label {
+     display: block;
+     font-family: 'Inter', sans-serif;
+     font-size: 0.875rem;
+     font-weight: 500;
+     color: var(--nm-ink);
+     margin-bottom: 0.5rem;
+   }
+   
+   .meridian-input-wrapper {
+     position: relative;
+     display: flex;
+     align-items: center;
+     background: var(--nm-bg);
+     border: none;
+     border-radius: 1.25rem;
+     height: var(--nm-field-h);
+   }
+   
+   /* The pressed-in shadow is drawn ON TOP of the field (not behind it),
+      so browser autofill or the input's own background can never cover it. */
+   .meridian-input-wrapper::after {
+     content: '';
+     position: absolute;
+     inset: 0;
+     border-radius: inherit;
+     box-shadow: var(--nm-inset-md);
+     pointer-events: none;
+     z-index: 2;
+     transition: box-shadow 200ms ease;
+   }
+   
+   .meridian-input-wrapper:focus-within::after {
+     box-shadow: var(--nm-inset-md), 0 0 0 0.125rem rgba(91, 82, 217, 0.55);
+   }
+   
+   .meridian-input-icon {
+     flex-shrink: 0;
+     margin-left: 1.125rem;
+     color: var(--nm-ink-soft);
+     transition: color 150ms ease;
+     width: 1.125rem;
+     height: 1.125rem;
+   }
+   
+   .meridian-input-wrapper:focus-within .meridian-input-icon {
+     color: var(--nm-indigo);
+   }
+   
+   .meridian-input {
+     flex: 1;
+     padding: 0 1rem;
+     background: transparent !important;
+     border: none;
+     outline: none;
+     box-shadow: none;
+     appearance: none;
+     -webkit-appearance: none;
+     color-scheme: dark;
+     font-family: 'Inter', sans-serif;
+     font-size: 0.9375rem;
+     color: var(--nm-ink);
+     height: 100%;
+     min-width: 0;
+   }
+   
+   .meridian-input::placeholder {
+     color: var(--nm-ink-soft);
+     opacity: 0.85;
+     font-size: 0.9375rem;
+     font-family: 'Inter', sans-serif;
+   }
+   
+   .meridian-input:-webkit-autofill,
+   .meridian-input:-webkit-autofill:hover,
+   .meridian-input:-webkit-autofill:focus,
+   .meridian-input:-webkit-autofill:active {
+     /* Chrome paints autofilled fields with its own color.
+        Cover it with a solid fill that matches the background. */
+     -webkit-text-fill-color: var(--nm-ink) !important;
+     caret-color: var(--nm-ink);
+     -webkit-box-shadow: 0 0 0 100rem var(--nm-bg) inset !important;
+     box-shadow: 0 0 0 100rem var(--nm-bg) inset !important;
+     background-color: var(--nm-bg) !important;
+     background-clip: content-box !important;
+     transition: background-color 600000s 0s, color 600000s 0s;
+   }
+   
+   .meridian-input:autofill {
+     -webkit-text-fill-color: var(--nm-ink) !important;
+     box-shadow: 0 0 0 100rem var(--nm-bg) inset !important;
+   }
+   
+   .meridian-toggle-password {
+     flex-shrink: 0;
+     position: relative;
+     z-index: 3;
+     padding: 0.625rem 1.125rem 0.625rem 0.5rem;
+     background: transparent !important;
+     border: none;
+     box-shadow: none;
+     color: var(--nm-ink-soft);
+     cursor: pointer;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     transition: color 150ms ease;
+   }
+   
+   .meridian-toggle-password svg {
+     width: 1.125rem;
+     height: 1.125rem;
+   }
+   
+   .meridian-toggle-password:hover {
+     color: var(--nm-indigo);
+   }
+   
+   .meridian-toggle-password:disabled {
+     opacity: 0.5;
+     cursor: not-allowed;
+   }
+   
+   /* ============================================================
+      PASSWORD REQUIREMENTS
+      ============================================================ */
+   .meridian-password-requirements {
+     margin-top: -0.25rem;
+     margin-bottom: 1rem;
+     padding: 0.875rem 1rem;
+     background: var(--nm-bg);
+     border-radius: 1rem;
+     border: none;
+     box-shadow: var(--nm-raised-sm);
+     animation: meridian-fade-slide 0.3s ease;
+   }
+   
+   @keyframes meridian-fade-slide {
+     from { opacity: 0; transform: translateY(-0.5rem); }
+     to   { opacity: 1; transform: translateY(0); }
+   }
+   
+   .meridian-password-strength {
+     font-family: 'Inter', sans-serif;
+     font-size: 0.8125rem;
+     font-weight: 600;
+   }
+   
+   .meridian-password-strength.strong .meridian-strength-valid {
+     color: var(--nm-success);
+   }
+   
+   .meridian-password-strength.weak .meridian-strength-invalid {
+     color: var(--nm-danger);
+   }
+   
+   .meridian-requirements-error-box {
+     font-size: 0.75rem;
+     font-family: 'Inter', sans-serif;
+     color: var(--nm-ink-soft);
+     line-height: 1.5;
+   }
+   
+   .meridian-requirements-error-title {
+     font-weight: 700;
+     color: var(--nm-danger);
+     margin-bottom: 0.25rem;
+     font-size: 0.75rem;
+   }
+   
+   .meridian-requirements-error-desc {
+     margin-bottom: 0.5rem;
+     font-size: 0.75rem;
+   }
+   
+   .meridian-requirements-example {
+     font-weight: 600;
+     color: var(--nm-indigo-ink);
+     background: var(--nm-bg);
+     box-shadow: var(--nm-inset-sm);
+     padding: 0.4375rem 0.75rem;
+     border-radius: 0.625rem;
+     display: inline-block;
+     font-size: 0.7188rem;
+   }
+   
+   /* ============================================================
+      FORM OPTIONS
+      ============================================================ */
+   .meridian-form-options {
+     display: flex;
+     align-items: center;
+     justify-content: space-between;
+     margin-bottom: 1.125rem;
+     flex-wrap: wrap;
+     gap: 0.625rem;
+   }
+   
+   .meridian-checkbox-label {
+     display: flex;
+     align-items: center;
+     gap: 0.75rem;
+     font-family: 'Inter', sans-serif;
+     font-size: 0.875rem;
+     color: var(--nm-ink-soft);
+     cursor: pointer;
+   }
+   
+   .meridian-checkbox-label input[type='checkbox'] {
+     display: none;
+   }
+   
+   .meridian-checkmark {
+     width: 1.5rem;
+     height: 1.5rem;
+     border: none;
+     border-radius: 0.5rem;
+     background: var(--nm-bg);
+     box-shadow: var(--nm-raised-sm);
+     transition: all 150ms ease;
+     flex-shrink: 0;
+     position: relative;
+   }
+   
+   .meridian-checkbox-label input:checked + .meridian-checkmark {
+     background: var(--nm-indigo);
+     box-shadow: inset 0.125rem 0.125rem 0.3125rem rgba(0, 0, 0, 0.25), inset -0.125rem -0.125rem 0.3125rem rgba(255, 255, 255, 0.2);
+   }
+   
+   .meridian-checkbox-label input:checked + .meridian-checkmark::after {
+     content: '✓';
+     position: absolute;
+     top: 50%;
+     left: 50%;
+     transform: translate(-50%, -50%);
+     color: #fff;
+     font-size: 0.8125rem;
+     font-weight: 700;
+   }
+   
+   /* FORGOT PASSWORD — RED */
+   .meridian-forgot-btn {
+     font-family: 'Inter', sans-serif;
+     font-size: 0.875rem;
+     font-weight: 600;
+     color: #D93636;
+     background: none;
+     border: none;
+     cursor: pointer;
+     padding: 0;
+     transition: color 150ms ease;
+   }
+   
+   .meridian-forgot-btn:hover {
+     color: #B91C1C; /* darker red on hover */
+     text-decoration: underline;
+   }
+   
+   .meridian-forgot-btn:disabled {
+     opacity: 0.5;
+     cursor: not-allowed;
+   }
+   
+   /* ============================================================
+      SUBMIT BUTTON — same navy as the page background
+      ============================================================ */
+   .meridian-submit-btn {
+     width: 100%;
+     padding: 0 1rem;
+     background: #0B1938;
+     color: #fff;
+     border: none;
+     border-radius: 1.375rem;
+     font-family: 'Inter', sans-serif;
+     font-size: 1rem;
+     font-weight: 600;
+     cursor: pointer;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     gap: 0.625rem;
+     box-shadow: 0.5rem 0.625rem 1.25rem rgba(11, 25, 56, 0.35), -0.375rem -0.375rem 0.875rem var(--nm-light);
+     transition: background 150ms ease, transform 100ms ease, box-shadow 150ms ease;
+     height: var(--nm-field-h);
+     letter-spacing: 0.0125rem;
+   }
+   
+   .meridian-submit-btn:hover:not(:disabled) {
+     background: #15296A; /* slightly lighter navy on hover */
+   }
+   
+   .meridian-submit-btn:active:not(:disabled) {
+     transform: scale(0.99);
+     box-shadow: 0.1875rem 0.25rem 0.625rem rgba(11, 25, 56, 0.35), -0.1875rem -0.1875rem 0.5rem var(--nm-light);
+   }
+   
+   .meridian-submit-btn:disabled {
+     opacity: 0.75;
+     cursor: default;
+   }
+   
+   .meridian-submit-btn.loading .meridian-btn-label {
+     display: none;
+   }
+   
+   .meridian-submit-btn.loading .meridian-spinner {
+     display: inline-block;
+   }
+   
+   .meridian-spinner {
+     display: none;
+     width: 1.125rem;
+     height: 1.125rem;
+     border: 0.1562rem solid rgba(255, 255, 255, 0.35);
+     border-top-color: #fff;
+     border-radius: 50%;
+     animation: meridian-spin 700ms linear infinite;
+   }
+   
+   @keyframes meridian-spin {
+     to { transform: rotate(360deg); }
+   }
+   
+   /* ============================================================
+      ATTEMPTS INFO
+      ============================================================ */
+   .meridian-attempts-info {
+     text-align: center;
+     font-family: 'Inter', sans-serif;
+     font-size: 0.8125rem;
+     color: var(--nm-ink-soft);
+     margin-top: 0.875rem;
+   }
+   
+   .meridian-attempts-info span {
+     font-weight: 500;
+   }
+   
+   /* ============================================================
+      ERROR MESSAGE
+      ============================================================ */
+   .meridian-error-message {
+     background: var(--nm-bg);
+     border: none;
+     box-shadow: var(--nm-inset-sm);
+     color: var(--nm-danger);
+     padding: 0.75rem 1rem;
+     border-radius: 0.875rem;
+     font-family: 'Inter', sans-serif;
+     font-size: 0.875rem;
+     text-align: center;
+     margin-bottom: 1.125rem;
+     animation: meridian-shake 0.4s ease;
+   }
+   
+   @keyframes meridian-shake {
+     0%, 100% { transform: translateX(0); }
+     20% { transform: translateX(-0.375rem); }
+     40% { transform: translateX(0.375rem); }
+     60% { transform: translateX(-0.25rem); }
+     80% { transform: translateX(0.25rem); }
+   }
+   
+   /* ============================================================
+      LOCKOUT TIMER (inline in card)
+      ============================================================ */
+   .meridian-lockout-timer {
+     display: flex;
+     align-items: center;
+     gap: 1rem;
+     background: var(--nm-bg);
+     border: none;
+     box-shadow: var(--nm-inset-sm);
+     border-radius: 1.125rem;
+     padding: 1rem 1.25rem;
+     margin-bottom: 1.125rem;
+   }
+   
+   .meridian-lockout-timer .meridian-lockout-icon {
+     font-size: 1.75rem;
+     flex-shrink: 0;
+   }
+   
+   .meridian-lockout-content {
+     flex: 1;
+     min-width: 0;
+   }
+   
+   .meridian-lockout-title {
+     font-family: 'Inter', sans-serif;
+     font-size: 0.875rem;
+     font-weight: 600;
+     color: var(--nm-danger);
+     margin-bottom: 0.25rem;
+   }
+   
+   .meridian-lockout-countdown {
+     font-family: 'Inter', sans-serif;
+     font-size: 1.5rem;
+     font-weight: 700;
+     color: var(--nm-ink);
+     letter-spacing: 0.125rem;
+   }
+   
+   .meridian-timer-value {
+     background: transparent;
+     padding: 0.1875rem 0;
+     border-radius: 0.5rem;
+   }
+   
+   .meridian-lockout-sub {
+     font-family: 'Inter', sans-serif;
+     font-size: 0.75rem;
+     color: var(--nm-ink-soft);
+     margin-top: 0.1875rem;
+   }
+   
+   /* ============================================================
+      HIDDEN (not in this design — markup left in the TSX)
+      ============================================================ */
+   .meridian-security-footer,
+   .meridian-footer-divider,
+   .meridian-form-hint,
+   .meridian-bottom-footer {
+     display: none;
+   }
+   
+   /* ============================================================
+      MODALS (stay dark navy)
+      ============================================================ */
+   .meridian-modal-overlay {
+     position: fixed;
+     inset: 0;
+     background: rgba(3, 8, 24, 0.65);
+     backdrop-filter: blur(0.3125rem);
+     -webkit-backdrop-filter: blur(0.3125rem);
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     z-index: 100;
+     padding: 1.25rem;
+   }
+   
+   .meridian-modal-box {
+     background: var(--nm-bg);
+     border: none;
+     border-radius: 1.75rem;
+     width: 100%;
+     max-width: 28.75rem;
+     max-height: 90vh;
+     overflow-y: auto;
+     box-shadow: 1.125rem 1.125rem 2.5rem rgba(2, 6, 20, 0.7), -0.625rem -0.625rem 1.875rem rgba(30, 55, 130, 0.35);
+     animation: meridian-modal-in 0.3s ease;
+   }
+   
+   @keyframes meridian-modal-in {
+     from { opacity: 0; transform: scale(0.95) translateY(0.625rem); }
+     to   { opacity: 1; transform: scale(1) translateY(0); }
+   }
+   
+   .meridian-modal-header {
+     display: flex;
+     align-items: flex-start;
+     justify-content: space-between;
+     padding: 1.75rem 1.75rem 0;
+   }
+   
+   .meridian-modal-header-left {
+     display: flex;
+     align-items: flex-start;
+     gap: 1rem;
+   }
+   
+   .meridian-modal-icon {
+     width: 3.25rem;
+     height: 3.25rem;
+     border-radius: 1rem;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     flex-shrink: 0;
+     color: #fff;
+   }
+   
+   .meridian-forgot-icon {
+     background: var(--nm-indigo);
+     box-shadow: var(--nm-raised-sm);
+   }
+   
+   .meridian-modal-icon.meridian-lockout-icon {
+     background: #DC2626;
+     box-shadow: var(--nm-raised-sm);
+   }
+   
+   .meridian-modal-title-section h3 {
+     font-family: 'Inter', sans-serif;
+     font-size: 1.4375rem;
+     font-weight: 700;
+     color: var(--nm-ink);
+     margin: 0 0 0.375rem;
+   }
+   
+   .meridian-modal-title-section p {
+     font-family: 'Inter', sans-serif;
+     font-size: 0.875rem;
+     color: var(--nm-ink-soft);
+     margin: 0;
+     line-height: 1.5;
+   }
+   
+   .meridian-close-btn {
+     background: var(--nm-bg);
+     border: none;
+     border-radius: 0.75rem;
+     box-shadow: var(--nm-raised-sm);
+     font-size: 1rem;
+     color: var(--nm-ink-soft);
+     cursor: pointer;
+     width: 2.25rem;
+     height: 2.25rem;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     transition: color 150ms ease;
+   }
+   
+   .meridian-close-btn:hover {
+     color: var(--nm-ink);
+   }
+   
+   .meridian-forgot-form {
+     padding: 1.5rem 1.75rem 1.75rem;
+   }
+   
+   .meridian-success-message {
+     background: var(--nm-bg);
+     box-shadow: var(--nm-inset-sm);
+     color: var(--nm-success);
+     padding: 0.75rem 1.125rem;
+     border-radius: 0.875rem;
+     font-family: 'Inter', sans-serif;
+     font-size: 0.875rem;
+     text-align: center;
+     margin-bottom: 0.75rem;
+     border: none;
+   }
+   
+   .meridian-modal-actions {
+     display: flex;
+     gap: 0.875rem;
+     margin-top: 1.375rem;
+   }
+   
+   .meridian-cancel-btn {
+     flex: 1;
+     padding: 1rem;
+     border-radius: 1.125rem;
+     border: none;
+     background: var(--nm-bg);
+     box-shadow: var(--nm-raised-sm);
+     color: var(--nm-ink);
+     font-family: 'Inter', sans-serif;
+     font-size: 0.9375rem;
+     font-weight: 600;
+     cursor: pointer;
+     transition: all 150ms ease;
+     min-height: 3.25rem;
+   }
+   
+   .meridian-cancel-btn:hover {
+     color: var(--nm-indigo-ink);
+   }
+   
+   .meridian-cancel-btn:active {
+     box-shadow: var(--nm-inset-sm);
+   }
+   
+   .meridian-send-btn {
+     flex: 1;
+     padding: 1rem;
+     border-radius: 1.125rem;
+     border: none;
+     background: var(--nm-indigo);
+     color: #fff;
+     font-family: 'Inter', sans-serif;
+     font-size: 0.9375rem;
+     font-weight: 600;
+     cursor: pointer;
+     transition: all 150ms ease;
+     min-height: 3.25rem;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     gap: 0.5rem;
+     box-shadow: 0.375rem 0.5rem 1rem rgba(5, 10, 40, 0.6), -0.3125rem -0.3125rem 0.75rem var(--nm-light);
+   }
+   
+   .meridian-send-btn:hover:not(:disabled) {
+     background: var(--nm-indigo-deep);
+   }
+   
+   .meridian-send-btn:disabled {
+     opacity: 0.6;
+     cursor: not-allowed;
+   }
+   
+   /* The TSX sets an inline blue on the lockout "Reset Password" button */
+   .meridian-lockout-modal .meridian-send-btn {
+     background: var(--nm-indigo) !important;
+   }
+   
+   .meridian-lockout-modal-body {
+     padding: 1.5rem 1.75rem 1.75rem;
+   }
+   
+   .meridian-lockout-alert {
+     display: flex;
+     align-items: center;
+     gap: 0.875rem;
+     background: var(--nm-bg);
+     border: none;
+     box-shadow: var(--nm-inset-sm);
+     border-radius: 1.125rem;
+     padding: 1rem 1.125rem;
+     margin-bottom: 1.125rem;
+   }
+   
+   .meridian-lockout-alert-icon {
+     width: 3.25rem;
+     height: 3.25rem;
+     border-radius: 50%;
+     background: var(--nm-bg);
+     box-shadow: var(--nm-raised-sm);
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     font-size: 1.375rem;
+     flex-shrink: 0;
+   }
+   
+   .meridian-lockout-alert-title {
+     font-family: 'Inter', sans-serif;
+     font-size: 0.9375rem;
+     font-weight: 600;
+     color: var(--nm-danger);
+     margin: 0;
+   }
+   
+   .meridian-lockout-alert-sub {
+     font-family: 'Inter', sans-serif;
+     font-size: 0.8125rem;
+     color: var(--nm-ink-soft);
+     margin: 0.25rem 0 0;
+   }
+   
+   .meridian-lockout-timer-display {
+     background: var(--nm-bg);
+     border: none;
+     box-shadow: var(--nm-raised-sm);
+     border-radius: 1.125rem;
+     padding: 1.25rem;
+     text-align: center;
+     margin-bottom: 1.125rem;
+   }
+   
+   .meridian-lockout-timer-label {
+     font-family: 'Inter', sans-serif;
+     font-size: 0.875rem;
+     color: var(--nm-ink-soft);
+     margin: 0 0 0.5rem;
+   }
+   
+   .meridian-lockout-timer-value {
+     font-family: 'Inter', sans-serif;
+     font-size: 2.125rem;
+     font-weight: 700;
+     color: var(--nm-ink);
+     margin: 0;
+   }
+   
+   .meridian-lockout-note {
+     background: var(--nm-bg);
+     border: none;
+     box-shadow: var(--nm-inset-sm);
+     border-radius: 1.125rem;
+     padding: 1rem 1.25rem;
+   }
+   
+   .meridian-lockout-note p {
+     font-family: 'Inter', sans-serif;
+     font-size: 0.8125rem;
+     color: var(--nm-ink-soft);
+     text-align: center;
+     margin: 0;
+     line-height: 1.6;
+   }
+   
+   .meridian-lockout-note span {
+     color: var(--nm-ink);
+     font-weight: 500;
+   }
+   
+   /* ============================================================
+      KEYBOARD FOCUS
+      ============================================================ */
+   .meridian-submit-btn:focus-visible,
+   .meridian-send-btn:focus-visible,
+   .meridian-cancel-btn:focus-visible,
+   .meridian-close-btn:focus-visible,
+   .meridian-forgot-btn:focus-visible,
+   .meridian-toggle-password:focus-visible {
+     outline: 0.125rem solid var(--nm-indigo);
+     outline-offset: 0.1875rem;
+   }
+   
+   /* ============================================================
+      RESPONSIVE — MOBILE (stacked)
+      ============================================================ */
+   @media (max-width: 760px) {
+     body { background: var(--nm-bg); }
+     .meridian-stage { border-radius: 0; }
+   
+     :root {
+       --nm-tile: 6.5rem;
+       --nm-field-h: 3rem;
+     }
+   
+     .meridian-login-layer {
+       flex-direction: column;
+     }
+   
+     .meridian-panel {
+       width: 100%;
+       height: 50%;
+     }
+   
+     .meridian-panel-brand {
+       padding: 1rem 0;
+     }
+   
+     .meridian-brand-content {
+       padding: 0 1rem;
+     }
+   
+     .meridian-brand-name {
+       font-size: 1.75rem;
+     }
+   
+     .meridian-panel-form {
+       padding: 0.75rem 1rem;
+     }
+   
+     .meridian-form-card {
+       max-width: 100%;
+       border-radius: 1.5rem;
+     }
+   
+     .meridian-stage.transitioning .meridian-panel-brand {
+       transform: translateY(-100%);
+     }
+   
+     .meridian-stage.transitioning .meridian-panel-form {
+       transform: translateY(100%);
+     }
+   
+     .meridian-modal-actions {
+       flex-direction: column;
+     }
+   }
+   
+   /* ============================================================
+      REDUCED MOTION
+      ============================================================ */
+   @media (prefers-reduced-motion: reduce) {
+     .meridian-panel,
+     .meridian-dashboard-preview {
+       transition: none;
+     }
+   }

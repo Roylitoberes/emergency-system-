@@ -1,0 +1,1462 @@
+/* ============================================================
+   Dashboard.css
+   Complete responsive stylesheet: tokens, layout, feed,
+   analytics, tables, skeletons, toasts, KPI cards, and
+   responsive fixes. Stretches to full width on big screens / TVs.
+   ============================================================ */
+
+/* ----- Design tokens ----- */
+:root {
+  /* Brand navy (matches the header) */
+  --navy: #0b1a3e;
+  --navy-2: #12265a;
+  --navy-3: #1b3475;
+  --accent: #3b6df0;
+  --accent-bright: #6f9bff;
+  --mint: #5eead4;
+
+  --forest: #0f1f4a;          /* primary (navy) */
+  --forest-soft: #e3e9f7;
+  --clay: #3b6df0;            /* accent (blue) */
+  --clay-soft: #e1e9fd;
+  --gold: #b7862a;
+  --gold-soft: #f8efd9;
+  --alert: #c2412f;
+  --alert-soft: #fbe4e0;
+
+  --bg: #eef1f8;
+  --panel: #ffffff;
+  --ink: #0f1b3a;
+  --ink-soft: #66708a;
+  --line: #dfe4f0;
+
+  --chart-reported: #6f9bff;
+  --chart-resolved: #5eead4;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+
+  --font-display: 'Inter', sans-serif;
+  --font-body: 'Inter', sans-serif;
+
+  --transition-fast: 140ms ease;
+  --transition-med: 260ms ease;
+
+  /* Responsive tokens */
+  --navbar-h: 72px;
+  --gutter: clamp(0.75rem, 1.4vw, 2rem);
+  --max-content: 100%; /* no width cap: fills the whole screen */
+}
+
+/* ============================================================
+   BASE LAYOUT
+   ============================================================ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  max-width: 100%;
+  overflow: hidden; /* Prevent body scrolling entirely */
+  height: 100%;
+}
+
+html, body, #root {
+  width: 100%;
+  margin: 0;
+  background: var(--bg);
+}
+
+/* ----- .dashboard ----- */
+.dashboard {
+  position: absolute; /* Changed from fixed to absolute to respect parent containers */
+  top: var(--navbar-h);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: auto;
+  max-width: none;
+  overflow: hidden;
+  background: var(--bg);
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  z-index: 1;
+}
+
+/* ----- .dashboard-scroll (Main Grid) ----- */
+.dashboard-scroll {
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  min-height: 0;
+  overflow: hidden; /* Stop overall page scrolling */
+  padding: var(--gutter);
+  padding-top: 0.5rem;
+  background: var(--bg);
+  font-family: var(--font-body);
+  color: var(--ink);
+
+  /* Grid Layout */
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr); /* KPI row is auto, rest is 1fr */
+  gap: var(--gutter);
+}
+
+/* ============================================================
+   CARDS
+   ============================================================ */
+.glass-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02), 0 6px 18px rgba(11, 26, 62, 0.06);
+  min-width: 0;
+}
+
+.card-pad {
+  padding: clamp(0.9rem, 1.1vw, 1.25rem);
+}
+
+/* ============================================================
+   GRIDS
+   ============================================================ */
+.grid {
+  display: grid;
+  gap: clamp(0.75rem, 1vw, 1rem);
+}
+
+/* Auto-fit KPI */
+.grid-kpi {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   KPI CARDS (Compact & Centered)
+   ============================================================ */
+.kpi-card {
+  padding: 0.8rem 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 90px;
+  min-width: 0;
+  gap: 0.75rem;
+}
+
+.kpi-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.kpi-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  letter-spacing: 0.02em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kpi-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--forest);
+  flex-shrink: 0;
+}
+
+.kpi-icon i {
+  width: 16px !important;
+  height: 16px !important;
+}
+
+/* --- Centered Bottom Section --- */
+.kpi-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: center; /* Horizontally center the number */
+  position: relative;      /* Allows the trend pill to float without pushing the number */
+  width: 100%;
+  min-width: 0;
+  padding-bottom: 0.25rem;
+}
+
+.kpi-value {
+  font-family: var(--font-display);
+  font-size: 2rem;         /* Scaled down to a balanced size */
+  font-weight: 700;
+  line-height: 1;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  text-align: center;
+  letter-spacing: -0.02em;
+}
+
+/* ============================================================
+   TREND PILLS
+   ============================================================ */
+.trend-pill {
+  position: absolute;
+  right: 0;
+  bottom: 4px;            /* Anchors the pill to the right corner */
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 999px;
+  color: var(--forest);
+  white-space: nowrap;
+}
+
+.trend-pill.muted {
+  background: #e6eaf4;
+  color: var(--ink-soft);
+}
+
+/* ============================================================
+   SOFT BACKGROUND UTILITIES
+   ============================================================ */
+.bg-forest-soft { background: var(--forest-soft); color: var(--forest); }
+.bg-clay-soft   { background: var(--clay-soft);   color: var(--clay); }
+.bg-gold-soft   { background: var(--gold-soft);   color: var(--gold); }
+.bg-alert-soft  { background: var(--alert-soft);  color: var(--alert); }
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 9px 16px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background var(--transition-fast), color var(--transition-fast),
+              border-color var(--transition-fast), opacity var(--transition-fast);
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.btn-forest {
+  background: var(--forest);
+  color: #fff;
+  border-color: var(--forest);
+}
+.btn-forest:hover { background: #0a1736; border-color: #0a1736; }
+.btn-forest:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-outline-soft {
+  background: transparent;
+  color: var(--ink-soft);
+  border-color: var(--line);
+}
+.btn-outline-soft:hover { color: var(--ink); border-color: #c3cbe0; }
+
+.flex-fill { flex: 1 1 0; min-width: 0; }
+
+/* ============================================================
+   SECTION HEADERS
+   ============================================================ */
+.section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.section-head > div:first-child {
+  min-width: 0;
+  flex: 1 1 200px;
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: clamp(0.98rem, 1.1vw, 1.1rem);
+  font-weight: 700;
+  margin: 0;
+  color: var(--ink);
+  letter-spacing: 0.01em;
+}
+
+.section-sub {
+  font-size: 11.5px;
+  color: var(--ink-soft);
+  margin: 4px 0 0 0;
+}
+
+.section-tag {
+  flex: 0 0 auto;
+  font-size: 10.5px;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 4px 10px;
+  background: var(--forest-soft);
+  color: var(--forest);
+  white-space: nowrap;
+}
+
+.section-tag.sample {
+  background: #e6eaf4;
+  color: var(--ink-soft);
+}
+
+/* ============================================================
+   FEED LAYOUT (Main Content Area)
+   ============================================================ */
+.feed-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  gap: var(--gutter);
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+  min-height: 0; /* Crucial for grid scroll */
+  overflow: hidden;
+}
+
+.feed-col,
+.analytics-col {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.85rem, 1.1vw, 1.1rem);
+  min-width: 0;
+  min-height: 0; /* Crucial */
+  max-height: 100%;
+}
+
+.analytics-col > *,
+.feed-col > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* The feed column */
+.feed-col {
+  overflow: hidden;
+}
+
+/* The scrollable wrapper around .feed-list */
+.feed-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto; /* Scroll only here */
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+
+.feed-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.feed-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.feed-scroll::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 999px;
+}
+
+.feed-scroll::-webkit-scrollbar-thumb:hover {
+  background: #c3cbe0;
+}
+
+/* Analytics column */
+.analytics-col {
+  overflow: hidden;
+}
+
+.analytics-col > .glass-card {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;   /* FIX: card never lets content spill out */
+}
+
+/* Ensure the chart fills the remaining space in the card.
+   FIX: lower min-height + hidden overflow so it can shrink
+   instead of being clipped when the header grows. */
+.analytics-col > .glass-card .chart-box {
+  flex: 1 1 auto;
+  min-height: 140px;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+/* FIX: the canvas is absolutely positioned so it fills the box
+   instead of forcing the box (and the card) taller. */
+.analytics-col > .glass-card .chart-box canvas {
+  position: absolute;
+  top: 10px;
+  left: 8px;
+  right: 8px;
+  bottom: 4px;
+  width: calc(100% - 16px) !important;
+  height: calc(100% - 14px) !important;
+  max-width: none !important;
+}
+
+/* ============================================================
+   FEED AVATAR / COMPOSER
+   ============================================================ */
+.feed-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.feed-composer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 1rem 1.25rem;
+  min-width: 0;
+}
+
+.feed-input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid transparent;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 13px;
+  border-radius: 999px;
+  padding: 11px 18px;
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.feed-input::placeholder { color: var(--ink-soft); }
+
+.feed-input:focus {
+  outline: none;
+  border-color: var(--forest);
+  background: var(--panel);
+}
+
+.composer-count {
+  font-size: 11px;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+
+.composer-count.warn {
+  color: var(--alert);
+  font-weight: 700;
+}
+
+/* ============================================================
+   FILTER TABS
+   ============================================================ */
+.feed-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.feed-tab {
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--ink-soft);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 7px 16px;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast),
+              border-color var(--transition-fast);
+  white-space: nowrap;
+}
+
+.feed-tab:hover {
+  color: var(--ink);
+  border-color: #c3cbe0;
+}
+
+.feed-tab.on {
+  background: var(--forest);
+  border-color: var(--forest);
+  color: #fff;
+}
+
+.feed-tab:focus-visible {
+  outline: 2px solid var(--forest);
+  outline-offset: 2px;
+}
+
+/* ============================================================
+   FEED LIST & POSTS
+   ============================================================ */
+.feed-list {
+  display: grid;
+  gap: clamp(0.85rem, 1.1vw, 1.1rem);
+  min-width: 0;
+}
+
+.feed-post {
+  display: grid;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
+.feed-post-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.feed-post-head > div:nth-child(2) {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.feed-author {
+  font-size: 13px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.feed-time {
+  font-size: 11px;
+  color: var(--ink-soft);
+  margin: 2px 0 0 0;
+}
+
+.feed-tag {
+  font-size: 10.5px;
+  font-weight: 700;
+  border-radius: 6px;
+  padding: 3px 9px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.feed-body {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--ink);
+  margin: 0;
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+}
+
+.feed-body-soft {
+  font-size: 12px;
+  color: var(--ink-soft);
+  margin: 2px 0 0 0;
+}
+
+.feed-foot {
+  display: flex;
+  gap: 6px;
+  padding-top: 0.7rem;
+  border-top: 1px solid var(--line);
+  flex-wrap: wrap;
+}
+
+.feed-foot button {
+  flex: 1 1 auto;
+  min-width: 90px;
+  border: none;
+  background: none;
+  color: var(--ink-soft);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 7px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.feed-foot button:hover {
+  background: var(--bg);
+  color: var(--ink);
+}
+
+.feed-foot button:focus-visible {
+  outline: 2px solid var(--forest);
+  outline-offset: 2px;
+}
+
+.feed-empty {
+  text-align: center;
+  color: var(--ink-soft);
+  font-size: 13px;
+  padding: 2rem 1rem;
+}
+
+.request-actions {
+  display: flex;
+  gap: 8px;
+  padding-top: 0.7rem;
+  border-top: 1px solid var(--line);
+  flex-wrap: wrap;
+}
+
+.request-actions .btn {
+  flex: 1 1 120px;
+}
+
+/* ============================================================
+   CHARTS
+   ============================================================ */
+.chart-box {
+  position: relative;
+  width: 100%;
+  /* Height managed by flex */
+  min-width: 0;
+  min-height: 160px;
+}
+
+.chart-box canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+}
+
+.chart-box-donut {
+  height: clamp(160px, 20vh, 200px);
+}
+
+.chart-stats {
+  display: flex;
+  gap: 1.25rem;
+  margin: 0.4rem 0 0.9rem 0;
+  flex-wrap: wrap;
+}
+
+.chart-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.chart-stat-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.chart-stat-label {
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+
+.chart-stat-value {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================
+   CHART CARD HEADER
+   FIX: wraps instead of squeezing the title into a thin column
+   when the date label gets wide (e.g. Monthly range).
+   ============================================================ */
+.chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;              /* was nowrap: buttons can drop below the title */
+  gap: 10px 12px;
+  margin-bottom: 0.75rem;
+  min-width: 0;
+}
+
+.chart-header-text {
+  flex: 1 1 260px;              /* title keeps a sane minimum width */
+  min-width: 0;
+}
+
+.chart-header-text .section-title { margin: 0; }
+.chart-header-text .section-sub   { margin: 4px 0 0 0; }
+
+.chart-header-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.chart-header-actions .feed-tab {
+  padding: 7px 14px;
+}
+
+.chart-cal-wrap { position: relative; }
+
+.chart-cal-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+.chart-cal-btn i {
+  flex-shrink: 0;
+}
+
+/* hidden native date input that powers the Calendar button */
+.chart-cal-input {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ============================================================
+   EMPTY STATE
+   ============================================================ */
+.empty-state {
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+  text-align: center;
+  padding: 1.5rem 1rem;
+  color: var(--ink-soft);
+}
+
+.empty-state-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  color: var(--ink-soft);
+  margin-bottom: 4px;
+}
+
+.empty-state strong {
+  font-size: 13.5px;
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.empty-state p {
+  font-size: 12px;
+  margin: 0;
+  max-width: 320px;
+  line-height: 1.5;
+}
+
+/* ============================================================
+   SKELETON LOADERS
+   ============================================================ */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.05) 25%,
+    rgba(0, 0, 0, 0.08) 37%,
+    rgba(0, 0, 0, 0.05) 63%
+  );
+  background-size: 400% 100%;
+  animation: skeleton-shimmer 1.4s ease infinite;
+  border-radius: 8px;
+}
+
+.skeleton-line {
+  height: 10px;
+  border-radius: 6px;
+}
+
+@keyframes skeleton-shimmer {
+  0%   { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton { animation: none; }
+}
+
+/* ============================================================
+   FEED POST ENTER ANIMATION
+   ============================================================ */
+@media (prefers-reduced-motion: no-preference) {
+  .feed-post {
+    animation: feed-post-in 320ms ease both;
+  }
+
+  @keyframes feed-post-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: none; }
+  }
+}
+
+/* ============================================================
+   LIVE PULSE ON ACTIVE KPI
+   ============================================================ */
+@media (prefers-reduced-motion: no-preference) {
+  .kpi-icon-live { position: relative; }
+
+  .kpi-icon-live::after {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    border-radius: inherit;
+    border: 2px solid var(--forest);
+    opacity: 0.5;
+    animation: pulse-ring 1.8s ease-out infinite;
+  }
+
+  @keyframes pulse-ring {
+    0%   { transform: scale(0.9); opacity: 0.6; }
+    100% { transform: scale(1.4); opacity: 0; }
+  }
+}
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+.toast {
+  position: fixed;
+  right: clamp(12px, 2vw, 20px);
+  bottom: clamp(12px, 2vw, 20px);
+  z-index: 9999;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 16px;
+  border-radius: 12px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  animation: toast-in 240ms ease both;
+  max-width: min(360px, calc(100vw - 24px));
+}
+
+.toast-ok  { border-left: 3px solid var(--forest); }
+.toast-err { border-left: 3px solid var(--alert); }
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast { animation: none; }
+}
+
+/* ============================================================
+   SCREEN-READER ONLY
+   ============================================================ */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ============================================================
+   TABLES (kept for other views that may still use them)
+   ============================================================ */
+.table-card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--panel);
+  min-width: 0;
+}
+
+.table-header-border,
+.table-footer-border {
+  padding: 0.6rem 0.9rem;
+  background: #f5f7fc;
+  border-bottom: 1px solid var(--line);
+}
+
+.table-footer-border {
+  border-bottom: none;
+  border-top: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.table-scroll-body {
+  max-height: 360px;
+  overflow-y: auto;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+
+.data-table th {
+  text-align: left;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--ink-soft);
+  padding: 10px 14px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.data-table td {
+  padding: 12px 14px;
+  border-top: 1px solid var(--line);
+  color: var(--ink);
+  vertical-align: middle;
+}
+
+.data-table tbody tr:hover {
+  background: #f5f7fc;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.role-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--forest-soft);
+  color: var(--forest);
+  white-space: nowrap;
+}
+
+.role-badge.admin      { background: var(--gold-soft);   color: var(--gold); }
+.role-badge.responder  { background: var(--forest-soft); color: var(--forest); }
+
+.status-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.status-dot.active   { background: #4caf50; }
+.status-dot.inactive { background: #bdbdbd; }
+
+.table-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.table-actions button {
+  border: none;
+  background: none;
+  cursor: pointer;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-soft);
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.table-actions button:hover {
+  background: var(--bg);
+  color: var(--ink);
+}
+
+.table-actions button:focus-visible {
+  outline: 2px solid var(--forest);
+  outline-offset: 2px;
+}
+
+/* ============================================================
+   ANALYTICS: Monthly Reports / Reports by Type / Status
+   ============================================================ */
+.chart-box-bar {
+  height: clamp(200px, 26vh, 260px);
+}
+
+/* Donut + legend layout */
+.donut-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  gap: 1rem;
+  align-items: center;
+}
+
+.donut-layout .chart-box-donut {
+  height: clamp(150px, 18vh, 190px);
+  min-width: 0;
+}
+
+.donut-legend {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.donut-legend-row {
+  display: grid;
+  grid-template-columns: 12px 1fr auto auto;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--ink);
+  min-width: 0;
+}
+
+.donut-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.donut-legend-label {
+  color: var(--ink-soft);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.donut-legend-value {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+.donut-legend-pct {
+  font-weight: 600;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+  font-size: 11.5px;
+  min-width: 44px;
+  text-align: right;
+}
+
+/* ============================================================
+   RESPONSIVE BREAKPOINTS
+   ============================================================ */
+
+/* --- Large desktop (≥1600px) --- */
+@media (min-width: 1600px) {
+  :root {
+    --gutter: 1.75rem;
+  }
+
+  .kpi-value { font-size: 2.4rem; }
+  .kpi-card { min-height: 110px; }
+  .kpi-label { font-size: 12.5px; }
+  .kpi-icon { width: 36px; height: 36px; }
+  .kpi-icon i { width: 18px !important; height: 18px !important; }
+  .trend-pill { font-size: 11px; bottom: 6px; }
+
+  .feed-avatar { width: 44px; height: 44px; }
+  .feed-author { font-size: 14.5px; }
+  .feed-time { font-size: 12px; }
+  .feed-body { font-size: 14.5px; }
+  .feed-body-soft { font-size: 13px; }
+  .feed-tag { font-size: 11.5px; }
+  .feed-tab { font-size: 13px; padding: 8px 18px; }
+
+  .section-title { font-size: 1.25rem; }
+  .section-sub { font-size: 12.5px; }
+  .chart-stat { font-size: 13px; }
+  .chart-stat-value { font-size: 1.25rem; }
+}
+
+/* --- Extra large / TV / 2K+ (≥2200px) --- */
+@media (min-width: 2200px) {
+  :root {
+    --gutter: 2.25rem;
+    --navbar-h: 80px;
+  }
+
+  .kpi2-title { font-size: 1.25rem; }
+  .kpi2-sub { font-size: 1rem; }
+  .kpi2-legend { font-size: 0.95rem; }
+
+  .kpi-card { min-height: 130px; padding: 1.1rem 1.4rem; }
+  .kpi-value { font-size: 3rem; }
+  .kpi-label { font-size: 15px; }
+  .kpi-icon { width: 46px; height: 46px; }
+  .kpi-icon i { width: 22px !important; height: 22px !important; }
+  .trend-pill { font-size: 12.5px; padding: 4px 12px; bottom: 10px; right: 0; }
+
+  .feed-avatar { width: 52px; height: 52px; font-size: 14px; }
+  .feed-author { font-size: 17px; }
+  .feed-time { font-size: 13px; }
+  .feed-body { font-size: 16.5px; }
+  .feed-body-soft { font-size: 15px; }
+  .feed-tag { font-size: 12.5px; }
+  .feed-tab { font-size: 15px; padding: 10px 22px; }
+  .feed-foot button { font-size: 14px; }
+
+  .section-title { font-size: 1.6rem; }
+  .section-sub { font-size: 14.5px; }
+  .chart-stat { font-size: 15px; }
+  .chart-stat-value { font-size: 1.5rem; }
+  .btn { font-size: 14px; padding: 11px 20px; }
+}
+
+/* --- Small desktop / large tablet (≤1400px) --- */
+@media (max-width: 1400px) {
+  .feed-layout {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  }
+}
+
+/* --- Tablet Landscape / Small Desktop (≤1100px) --- */
+@media (max-width: 1100px) {
+  html, body {
+    overflow: auto; /* Allow scrolling */
+  }
+
+  .dashboard {
+    position: relative; /* Switch back to relative for mobile scroll */
+    top: 0;
+    left: 0;
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+  }
+
+  .dashboard-scroll {
+    height: auto;
+    min-height: auto;
+    overflow: visible;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .feed-layout {
+    display: flex;
+    flex-direction: column;
+    max-height: none;
+    flex: none;
+  }
+
+  .feed-col {
+    overflow: visible;
+    flex: none;
+  }
+
+  .feed-scroll {
+    max-height: 500px; /* Limit feed height */
+    overflow-y: auto;
+  }
+
+  .analytics-col {
+    overflow: visible;
+    flex: none;
+    width: 100%;
+  }
+
+  .analytics-col > .glass-card {
+    flex: none;
+    height: auto;
+  }
+
+  .analytics-col > .glass-card .chart-box {
+    height: 300px;
+  }
+}
+
+/* --- Small tablet / large phone (≤768px) --- */
+@media (max-width: 768px) {
+  :root {
+    --navbar-h: 64px;
+  }
+
+  .section-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .section-head > div:first-child {
+    flex: 1 1 auto;
+    width: 100%;
+  }
+
+  .feed-post-head {
+    flex-wrap: wrap;
+  }
+
+  .feed-tag {
+    margin-left: auto;
+  }
+}
+
+/* --- Phone (≤576px) --- */
+@media (max-width: 576px) {
+  :root {
+    --gutter: 0.85rem;
+  }
+
+  .dashboard-scroll {
+    padding: var(--gutter);
+    gap: 0.85rem;
+  }
+
+  .feed-composer {
+    padding: 0.85rem;
+    flex-wrap: wrap;
+  }
+
+  .feed-composer .btn {
+    padding: 9px 12px;
+  }
+
+  .feed-composer .feed-input {
+    flex-basis: 100%;
+    order: 3;
+  }
+
+  .today-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .today-value {
+    font-size: 2rem;
+  }
+
+  .analytics-col > .glass-card .chart-box {
+    height: 250px;
+    min-height: 200px;
+  }
+
+  .donut-layout {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+  .donut-layout .chart-box-donut {
+    height: 180px;
+    width: 100%;
+    max-width: 240px;
+  }
+  .donut-legend {
+    width: 100%;
+  }
+
+  .feed-foot button {
+    min-width: 0;
+    padding: 7px 4px;
+    font-size: 11px;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 10px 10px;
+  }
+
+  .kpi-value { font-size: 1.8rem; }
+}
+
+/* --- Very small phone (≤380px) --- */
+@media (max-width: 380px) {
+  :root {
+    --gutter: 0.65rem;
+  }
+
+  .dashboard-scroll {
+    padding: var(--gutter);
+    gap: 0.7rem;
+  }
+
+  .card-pad,
+  .kpi-card {
+    padding: 0.65rem 0.75rem;
+  }
+
+  .feed-tab {
+    padding: 6px 12px;
+    font-size: 11px;
+  }
+
+  .feed-foot button {
+    font-size: 10px;
+  }
+
+  .donut-legend-row {
+    font-size: 11px;
+    gap: 6px;
+  }
+
+  .donut-legend-pct {
+    font-size: 10.5px;
+    min-width: 38px;
+  }
+}
+
+/* ============================================================
+   NAVY THEME — matches the header
+   ============================================================ */
+
+/* KPI cards: crisp white with a navy accent edge */
+.kpi-card {
+  position: relative;
+  overflow: hidden;
+  border-color: var(--line);
+}
+.kpi-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 14%;
+  bottom: 14%;
+  width: 4px;
+  border-radius: 0 4px 4px 0;
+  background: linear-gradient(180deg, var(--accent), var(--navy-2));
+}
+.kpi-label { color: var(--ink-soft); }
+.kpi-value { color: var(--navy); }
+
+/* Filter tabs & primary buttons use navy */
+.feed-tab.on,
+.btn-forest {
+  background: var(--navy);
+  border-color: var(--navy);
+  color: #fff;
+}
+.feed-tab:hover { border-color: var(--accent); color: var(--navy); }
+.feed-tab.on:hover { color: #fff; border-color: var(--navy); }
+
+/* Feed cards */
+.feed-post.glass-card { border-color: var(--line); }
+.feed-author { color: var(--navy); }
+
+/* ---------- Analytics card = same navy as the header ---------- */
+.analytics-col > .glass-card {
+  background: linear-gradient(160deg, var(--navy) 0%, var(--navy-2) 100%);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 10px 30px rgba(11, 26, 62, 0.28);
+  color: #fff;
+}
+
+.analytics-col .section-title { color: #fff; }
+.analytics-col .section-sub   { color: rgba(255, 255, 255, 0.62); }
+
+.analytics-col .feed-tab {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.78);
+}
+.analytics-col .feed-tab:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.28);
+  color: #fff;
+}
+.analytics-col .feed-tab.on,
+.analytics-col .feed-tab.on:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(59, 109, 240, 0.45);
+}
+.analytics-col .feed-tab:focus-visible { outline-color: var(--accent-bright); }
+
+.analytics-col .chart-stat-label { color: rgba(255, 255, 255, 0.65); }
+.analytics-col .chart-stat-value { color: #fff; }
+.chart-stat-dot.reported { background: var(--chart-reported); }
+.chart-stat-dot.resolved { background: var(--chart-resolved); }
+
+/* Chart sits in a subtle inset panel
+   (padding removed: the canvas is absolutely positioned now) */
+.analytics-col > .glass-card .chart-box {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-md);
+}
+
+/* Toast accent */
+.toast-ok { border-left-color: var(--accent); }
+
+/* Scrollbar */
+.feed-scroll::-webkit-scrollbar-thumb { background: #cdd4e6; }
+.feed-scroll::-webkit-scrollbar-thumb:hover { background: #b3bdd8; }

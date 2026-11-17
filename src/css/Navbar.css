@@ -1,0 +1,1268 @@
+/* ============================================================
+   TOP NAVBAR — Reserve-Ops Theme (All Navy Blue)
+   ============================================================ */
+
+   .rops-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    box-sizing: border-box;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    padding: 0 24px;
+    background-color: #0B1938;
+    color: #D6E0F5;
+    z-index: 1000;
+    font-family: 'Inter', sans-serif;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.18);
+  }
+  
+  /* ============================================================
+     BRAND (admin photo + admin name)
+     ============================================================ */
+  
+  .rops-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+  
+  .rops-brand-mark {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  
+  .rops-brand-avatar {
+    width: 44px;
+    height: 44px;
+    overflow: hidden;
+    padding: 0;
+    border-radius: 13px;
+    background: transparent;
+    border: 2px solid rgba(255, 255, 255, 0.18);
+    box-sizing: border-box;
+    color: #fff;
+    font-weight: 700;
+    font-size: 17px;
+  }
+  
+  .rops-brand-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 6px;
+    box-sizing: border-box;
+    display: block;
+  }
+  
+  .rops-brand-text {
+    min-width: 0;
+  }
+  
+  .rops-brand-name {
+    max-width: 180px;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: 0.1px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .rops-brand-sub {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 3px;
+    font-size: 11.5px;
+    color: #8FA3C8;
+  }
+  
+  .rops-brand-sub::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #5BD68A;
+    box-shadow: 0 0 0 3px rgba(91, 214, 138, 0.18);
+  }
+  
+  /* ============================================================
+     NAV LINKS
+     ============================================================ */
+  
+  .rops-nav {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
+    min-width: 0;
+  }
+  
+  .rops-nav-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 10px 14px;
+    border-radius: 11px;
+    font-size: 13px;
+    color: #B8C6E6;
+    font-weight: 500;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.2s ease, color 0.2s ease;
+    font-family: inherit;
+  }
+  
+  .rops-nav-item svg {
+    width: 17px;
+    height: 17px;
+    flex-shrink: 0;
+  }
+  
+  .rops-nav-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: #fff;
+  }
+  
+  .rops-nav-item.active {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    font-weight: 600;
+  }
+  
+  .rops-nav-item.active svg {
+    color: #fff;
+  }
+  
+  /* underline on the active tab */
+  .rops-nav-item.active::after {
+    content: '';
+    position: absolute;
+    left: 14px;
+    right: 14px;
+    bottom: -9px;
+    height: 3px;
+    border-radius: 3px 3px 0 0;
+    background: #6FA8FF;
+  }
+  
+  .rops-nav-item:focus-visible,
+  .rops-profile-btn:focus-visible,
+  .rops-menu-toggle:focus-visible {
+    outline: 2px solid #9CC2FF;
+    outline-offset: 2px;
+  }
+  
+  /* ============================================================
+     RIGHT SIDE
+     ============================================================ */
+  
+  .rops-right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+  
+  /* ============================================================
+     SETTINGS BUTTON + DROPDOWN (compact)
+     ============================================================ */
+  
+  .rops-profile {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 14px;   /* space between the gear and the About icon */
+  }
+  
+  .rops-profile-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: #B8C6E6;
+  }
+  
+  .rops-profile-btn .rops-chev {
+    width: 14px;
+    height: 14px;
+  }
+  
+  /* gear button */
+  .rops-settings-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    transition: background 0.2s ease, transform 0.3s ease;
+  }
+  
+  .rops-settings-icon svg {
+    width: 19px;
+    height: 19px;
+  }
+  
+  .rops-settings-btn:hover .rops-settings-icon {
+    background: #3B6FD4;
+    transform: rotate(45deg);
+  }
+  
+  .rops-profile-menu {
+    position: absolute;
+    top: calc(100% + 12px);
+    right: 0;
+    min-width: 220px;
+    padding: 4px;
+    border-radius: 16px;
+    background: #0B1938;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.45);
+  }
+  
+  .rops-settings-menu {
+    width: 320px;
+    max-height: calc(100vh - 90px);
+    overflow-y: auto;
+    padding: 4px;
+    color: #fff;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+  }
+  
+  .rops-settings-menu::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .rops-settings-menu::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 6px;
+  }
+  
+  .rops-set-section {
+    padding: 8px;
+  }
+  
+  .rops-set-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #fff;
+  }
+  
+  .rops-set-title svg {
+    width: 28px;
+    height: 28px;
+    padding: 6px;
+    box-sizing: border-box;
+    border-radius: 8px;
+    background: rgba(111, 168, 255, 0.14);
+    color: #6FA8FF;
+    flex-shrink: 0;
+  }
+  
+  .rops-set-desc {
+    font-size: 11.5px;
+    color: #8FA3C8;
+    margin: 2px 0 8px 38px;
+  }
+  
+  .rops-set-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.08);
+    margin: 0 8px;
+  }
+  
+  /* ---------- profile hero ---------- */
+  
+  .rops-profile-hero {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 8px;
+    margin-bottom: 6px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  
+  .rops-hero-text {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  
+  .rops-hero-name {
+    max-width: 100%;
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .rops-hero-badge {
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #9CC2FF;
+    background: rgba(111, 168, 255, 0.14);
+    border: 1px solid rgba(111, 168, 255, 0.3);
+  }
+  
+  /* ---------- info rows ---------- */
+  
+  .rops-set-list {
+    list-style: none;
+    margin: 0 0 8px;
+    padding: 0 12px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  
+  .rops-set-list li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 7px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    font-size: 12.5px;
+  }
+  
+  .rops-set-list li:last-child {
+    border-bottom: none;
+  }
+  
+  .rops-set-label {
+    color: #8FA3C8;
+    flex-shrink: 0;
+  }
+  
+  .rops-set-value {
+    color: #fff;
+    font-weight: 500;
+    text-align: right;
+    word-break: break-all;
+  }
+  
+  /* email-change confirmation shown on the default view */
+  .rops-email-notice {
+    margin: 0 0 8px;
+    line-height: 1.4;
+  }
+  
+  /* ---------- action buttons ---------- */
+  
+  .rops-set-action {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.06);
+    color: #fff;
+    font-size: 12.5px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease;
+  }
+  
+  .rops-set-action:hover {
+    background: #3B6FD4;
+    border-color: #3B6FD4;
+  }
+  
+  .rops-set-action-row {
+    display: block;
+    text-align: center;
+    margin-top: 0;
+  }
+  
+  /* ---------- logout button ---------- */
+  
+  .rops-profile-logout {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 11px 12px;
+    border: 1px solid rgba(255, 138, 92, 0.35);
+    border-radius: 12px;
+    background: rgba(255, 138, 92, 0.08);
+    color: #FF9B7A;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  }
+  
+  .rops-profile-logout svg {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .rops-profile-logout:hover {
+    background: #E5484D;
+    border-color: #E5484D;
+    color: #fff;
+    box-shadow: 0 8px 20px rgba(229, 72, 77, 0.35);
+  }
+  
+  .rops-settings-menu .rops-profile-logout {
+    margin: 6px 4px 4px;
+    width: calc(100% - 8px);
+    padding: 8px 12px;
+  }
+  
+  /* ============================================================
+     EDIT PROFILE FORM (inside dropdown)
+     ============================================================ */
+  
+  .rops-edit-profile-form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 4px;
+    padding: 10px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  
+  .rops-edit-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  
+  .rops-edit-group {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  
+  .rops-edit-group label {
+    font-size: 11.5px;
+    color: #8FA3C8;
+    font-weight: 600;
+  }
+  
+  .rops-edit-group input {
+    width: 100%;
+    padding: 7px 10px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: rgba(255, 255, 255, 0.06);
+    font-size: 12.5px;
+    font-family: inherit;
+    color: #fff;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    box-sizing: border-box;
+  }
+  
+  .rops-edit-group input::placeholder {
+    color: #6F84AD;
+  }
+  
+  .rops-edit-group input:focus {
+    border-color: #6FA8FF;
+    box-shadow: 0 0 0 3px rgba(111, 168, 255, 0.22);
+  }
+  
+  .rops-edit-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 2px;
+  }
+  
+  .rops-btn-cancel,
+  .rops-btn-save {
+    flex: 1;
+    padding: 7px 12px;
+    border-radius: 10px;
+    font-size: 12.5px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+  }
+  
+  .rops-btn-cancel {
+    background: rgba(255, 255, 255, 0.08);
+    color: #D6E0F5;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+  }
+  
+  .rops-btn-cancel:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.16);
+  }
+  
+  .rops-btn-save {
+    background: #3B6FD4;
+    color: #fff;
+  }
+  
+  .rops-btn-save:hover:not(:disabled) {
+    background: #4A7FE6;
+  }
+  
+  .rops-btn-cancel:disabled,
+  .rops-btn-save:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  
+  /* ============================================================
+     CHANGE PASSWORD / FORGOT PASSWORD (compact, inside dropdown)
+     ============================================================ */
+  
+  .pw-inline {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 0;
+  }
+  
+  .pw-heading {
+    margin-top: 0;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.4;
+  }
+  
+  .pw-card {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  
+  .pw-card label {
+    margin-top: 2px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #8FA3C8;
+  }
+  
+  .pw-card input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 7px 10px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: rgba(255, 255, 255, 0.06);
+    color: #fff;
+    font-size: 12.5px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  .pw-card input::placeholder {
+    color: #6F84AD;
+  }
+  
+  .pw-card input:focus {
+    border-color: #6FA8FF;
+    box-shadow: 0 0 0 3px rgba(111, 168, 255, 0.22);
+  }
+  
+  /* eye button */
+  .pw-input-wrap {
+    position: relative;
+    width: 100%;
+  }
+  
+  .pw-input-wrap input {
+    padding-right: 40px;
+  }
+  
+  .pw-eye-btn {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: 4px;
+    margin: auto 0;          /* centers vertically, no transform needed */
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: #8FA3C8;
+    cursor: pointer;
+    transform: none;
+    transition: color 0.2s ease, background 0.2s ease;
+  }
+  
+  /* never move on hover / click / focus */
+  .pw-eye-btn:hover,
+  .pw-eye-btn:active,
+  .pw-eye-btn:focus,
+  .pw-eye-btn:focus-visible {
+    transform: none !important;
+    top: 0;
+    bottom: 0;
+    margin: auto 0;
+  }
+  
+  .pw-eye-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .pw-eye-btn:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+  }
+  
+  .pw-eye-btn:focus-visible {
+    outline: 2px solid #9CC2FF;
+    outline-offset: 1px;
+  }
+  
+  /* one-line password rule (shown only while New Password is focused) */
+  .pw-hint {
+    margin: 0;
+    font-size: 11px;
+    color: #9CC2FF;
+    line-height: 1.4;
+  }
+  
+  /* forgot password: email + button on one row */
+  .pw-reset-row {
+    display: flex;
+    gap: 6px;
+    align-items: stretch;
+  }
+  
+  .pw-reset-row .pw-plain-input {
+    flex: 1;
+    min-width: 0;
+  }
+  
+  .pw-reset-row .rops-btn-save {
+    flex: none;
+    white-space: nowrap;
+  }
+  
+  /* messages */
+  .rops-pw-error {
+    font-size: 11.5px;
+    color: #FF9B7A;
+    font-weight: 600;
+  }
+  
+  .rops-pw-success {
+    font-size: 11.5px;
+    color: #5BD68A;
+    font-weight: 600;
+  }
+  
+  /* ============================================================
+     MOBILE HAMBURGER (hidden on desktop)
+     ============================================================ */
+  
+  .rops-menu-toggle {
+    display: none;
+    width: 38px;
+    height: 38px;
+    border: none;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .rops-menu-toggle svg {
+    width: 20px;
+    height: 20px;
+  }
+  
+  /* ============================================================
+     LOGOUT MODAL  (navy, same as header)
+     ============================================================ */
+  
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px) scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+  
+  .logout-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(3, 8, 22, 0.72);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    backdrop-filter: blur(4px);
+    animation: fadeIn 0.3s ease;
+  }
+  
+  .logout-modal-content {
+    background: #0B1938;
+    border-radius: 20px;
+    padding: 36px 32px 32px;
+    max-width: 420px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+    animation: slideUp 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .modal-warning-icon {
+    margin-bottom: 18px;
+  }
+  
+  .modal-warning-circle {
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    background: rgba(245, 185, 74, 0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    border: 2px solid rgba(245, 185, 74, 0.55);
+    color: #F5B94A;
+  }
+  
+  .modal-warning-circle svg {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .logout-modal-content h2 {
+    color: #fff;
+    margin: 0 0 10px;
+    font-size: 22px;
+    font-weight: 700;
+    font-family: inherit;
+  }
+  
+  .logout-modal-content p {
+    color: #D6E0F5;
+    font-size: 15px;
+    line-height: 1.6;
+    margin: 0 0 6px;
+  }
+  
+  .logout-modal-content .sub-text {
+    color: #8FA3C8;
+    font-size: 13px;
+    margin-bottom: 26px;
+  }
+  
+  .modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    padding-top: 22px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .btn-cancel {
+    padding: 12px 24px;
+    border-radius: 100px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.06);
+    color: #fff;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    flex: 1;
+    font-family: inherit;
+  }
+  
+  .btn-cancel:hover {
+    background: rgba(255, 255, 255, 0.14);
+    border-color: rgba(255, 255, 255, 0.35);
+  }
+  
+  .btn-logout {
+    padding: 12px 24px;
+    border-radius: 100px;
+    border: none;
+    background: #3B6FD4;
+    color: #fff;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: inherit;
+  }
+  
+  .btn-logout svg {
+    width: 17px;
+    height: 17px;
+  }
+  
+  /* hover: turns red so the action feels final */
+  .btn-logout:hover {
+    background: #E5484D;
+    transform: translateY(-1px);
+    box-shadow: 0 10px 24px rgba(229, 72, 77, 0.4);
+  }
+  
+  .btn-logout:active {
+    transform: scale(0.98);
+  }
+  
+  .btn-cancel:focus-visible,
+  .btn-logout:focus-visible {
+    outline: 2px solid #9CC2FF;
+    outline-offset: 2px;
+  }
+  
+  /* ============================================================
+     LAYOUT OVERRIDES (sidebar removed)
+     ============================================================ */
+  
+  .app {
+    display: block !important;
+  }
+  
+  .app > .rops-header + .main-content {
+    margin-left: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding-top: 64px;
+    box-sizing: border-box;
+  }
+  
+  /* ============================================================
+     RESPONSIVE
+     ============================================================ */
+  
+  @media (max-width: 1100px) {
+    .rops-nav-item {
+      padding: 10px 11px;
+    }
+  }
+  
+  @media (max-width: 992px) {
+    .rops-header {
+      gap: 16px;
+      padding: 0 16px;
+    }
+    /* hide labels, keep icons */
+    .rops-nav-item span {
+      display: none;
+    }
+    .rops-nav-item {
+      padding: 10px 12px;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .rops-menu-toggle {
+      display: flex;
+    }
+  
+    .rops-brand-sub {
+      display: none;
+    }
+  
+    /* nav becomes a dropdown panel under the header */
+    .rops-nav {
+      position: absolute;
+      top: 64px;
+      left: 0;
+      right: 0;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 4px;
+      padding: 12px 16px 16px;
+      background: #0B1938;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.25);
+      display: none;
+    }
+  
+    .rops-nav.open {
+      display: flex;
+    }
+  
+    .rops-nav-item {
+      padding: 12px;
+    }
+  
+    .rops-nav-item span {
+      display: inline;
+    }
+  
+    .rops-nav-item.active::after {
+      display: none;
+    }
+  
+    .logout-modal-content {
+      padding: 30px 24px;
+    }
+  
+    .modal-actions {
+      flex-direction: column;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .rops-brand-avatar {
+      width: 38px;
+      height: 38px;
+    }
+    .rops-brand-name {
+      max-width: 110px;
+    }
+    .rops-settings-menu {
+      width: min(320px, calc(100vw - 32px));
+    }
+    .logout-modal-content {
+      padding: 24px 16px;
+      max-width: 95%;
+    }
+    .logout-modal-content h2 {
+      font-size: 20px;
+    }
+    .logout-modal-content p {
+      font-size: 14px;
+    }
+    .btn-cancel,
+    .btn-logout {
+      padding: 10px 20px;
+      font-size: 13px;
+    }
+  }
+  
+  /* ============================================================
+     EMAIL VERIFICATION POP-UP
+     ============================================================ */
+  
+  .logout-modal-content.em-modal {
+    text-align: left;
+    padding: 26px 24px 22px;
+  }
+  
+  .em-modal h2 {
+    text-align: center;
+    font-size: 20px;
+  }
+  
+  .em-modal .sub-text {
+    margin-bottom: 10px;
+    text-align: center;
+  }
+  
+  .em-modal-card {
+    margin-top: 8px;
+  }
+  
+  .em-modal-msg {
+    margin-bottom: 8px;
+  }
+  
+  .em-modal .modal-actions {
+    margin-top: 14px;
+    padding-top: 16px;
+  }
+  
+  .btn-cancel:disabled,
+  .btn-logout:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  /* ============================================================
+     ABOUT PORTAL ICON + DROPDOWN  (keep this block LAST)
+     The info icon sits to the right of the gear and toggles the
+     "About NAGA READY" dropdown (same placement as Settings).
+     ============================================================ */
+
+  /* ---- the info icon ---- */
+  .rops-about-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    border-radius: 50%;
+    background: transparent;
+    border: 1.5px solid #3B6FD4;
+    color: #9CC2FF;
+    cursor: pointer;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+  }
+
+  .rops-about-btn svg {
+    width: 19px;
+    height: 19px;
+    display: block;
+  }
+
+  .rops-about-btn:hover,
+  .rops-about-btn.open {
+    background: #3B6FD4;
+    color: #fff;
+  }
+
+  .rops-about-btn:hover {
+    transform: scale(1.05);
+  }
+
+  .rops-about-btn:focus-visible {
+    outline: 2px solid #9CC2FF;
+    outline-offset: 2px;
+  }
+
+  /* ---- the dropdown ---- */
+  .rops-about-menu,
+  .rops-about-menu * {
+    box-sizing: border-box;
+  }
+
+  .rops-about-menu {
+    position: absolute;
+    top: calc(100% + 12px);
+    right: 0;
+    width: 340px;
+    max-width: calc(100vw - 24px);
+    max-height: calc(100vh - 90px);
+    display: flex;
+    flex-direction: column;
+    background: #0B1938;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 16px;
+    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.45);
+    color: #fff;
+    font-family: 'Inter', sans-serif;
+    overflow: hidden;
+    z-index: 1100;
+  }
+
+  .rops-about-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    flex-shrink: 0;
+  }
+
+  .rops-about-logo {
+    width: 34px;
+    height: 34px;
+    object-fit: contain;
+    flex-shrink: 0;
+  }
+
+  .rops-about-title {
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .rops-about-body {
+    padding: 10px 14px 12px;
+    overflow-y: auto;
+    font-size: 12px;
+    line-height: 1.55;
+    color: #D6E0F5;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+  }
+
+  .rops-about-body::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .rops-about-body::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 6px;
+  }
+
+  .rops-about-body p {
+    margin: 0 0 10px;
+  }
+
+  .rops-about-body strong {
+    color: #fff;
+  }
+
+  .rops-about-body h4 {
+    margin: 12px 0 8px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #6FA8FF;
+  }
+
+  .rops-about-features {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: ab-feat;
+  }
+
+  .rops-about-features li {
+    counter-increment: ab-feat;
+    position: relative;
+    padding: 8px 10px 8px 38px;
+    margin-bottom: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+  }
+
+  .rops-about-features li::before {
+    content: counter(ab-feat);
+    position: absolute;
+    left: 10px;
+    top: 9px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: rgba(111, 168, 255, 0.18);
+    border: 1px solid rgba(111, 168, 255, 0.4);
+    color: #9CC2FF;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .rops-about-features li strong {
+    display: block;
+    font-size: 12.5px;
+    margin-bottom: 1px;
+  }
+
+  .rops-about-features li span {
+    display: block;
+    font-size: 11.5px;
+    color: #8FA3C8;
+  }
+
+  .rops-about-info {
+    margin-top: 12px;
+    padding: 2px 12px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+  }
+
+  .rops-about-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 8px 0;
+    font-size: 12px;
+  }
+
+  .rops-about-row + .rops-about-row {
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .rops-about-row span {
+    color: #8FA3C8;
+    white-space: nowrap;
+  }
+
+  .rops-about-row strong {
+    text-align: right;
+    font-weight: 600;
+  }
+
+  .rops-about-foot {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    text-align: center;
+    font-size: 11px;
+    color: #6F84AD;
+  }
+
+  @media (max-width: 480px) {
+    .rops-about-menu {
+      position: fixed;
+      top: 70px;
+      left: 12px;
+      right: 12px;
+      width: auto;
+      max-width: none;
+    }
+
+    .rops-about-row {
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .rops-about-row strong {
+      text-align: left;
+    }
+  }

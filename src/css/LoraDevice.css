@@ -1,0 +1,1027 @@
+/* web/src/css/LoraDevice.css */
+/* ✅ Layout & design mirrors IncidentIntake so both pages look identical.
+   Includes all shared classes + LoRa-specific helpers (signal dots, type badge, mono). */
+
+/* ============================================
+   PAGE
+   ============================================ */
+
+   .incident-page {
+    position: absolute;
+    top: 60px;
+    left: 150px;
+    right: 0;
+    bottom: 0;
+    overflow: hidden;
+    transition: left 0.3s ease;
+    background: #0B1220;
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .page-content.sidebar-closed .incident-page {
+    left: 0;
+  }
+  
+  /* ============================================
+     GRID LAYOUT
+     ============================================ */
+  
+  .incident-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+    gap: clamp(16px, 1.2vw, 32px);
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    align-items: stretch;
+    overflow: hidden;
+  }
+  
+  .incident-grid > .details-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    max-height: 100%;
+    overflow: hidden;
+  }
+  
+  .incident-grid > .right-column {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    height: 100%;
+    min-height: 0;
+    max-height: 100%;
+    overflow: hidden;
+  }
+  
+  /* ============================================
+     CARDS
+     ============================================ */
+  
+  .details-card,
+  .map-card,
+  .actions-card,
+  .table-card {
+    background: #111827;
+    border-radius: 12px;
+    border: 1px solid #334155;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  }
+  
+  .details-card:hover,
+  .map-card:hover,
+  .actions-card:hover,
+  .table-card:hover {
+    border-color: #3B82F6;
+  }
+  
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #2B3648;
+    flex-shrink: 0;
+  }
+  
+  .card-header h5 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #F8FAFC;
+    margin: 0;
+  }
+  
+  .edit-btn,
+  .view-btn,
+  .filter-btn {
+    background: transparent;
+    border: 1px solid #334155;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #94A3B8;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  
+  .edit-btn:hover,
+  .view-btn:hover,
+  .filter-btn:hover {
+    background: #1F2937;
+    border-color: #3B82F6;
+    color: #3B82F6;
+  }
+  
+  /* ============================================
+     INCIDENT CONTENT (scroll area)
+     ============================================ */
+  
+  .incident-content {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 4px;
+    padding-top: 8px;
+  }
+  
+  .incident-content::-webkit-scrollbar {
+    width: 4px;
+  }
+  
+  .incident-content::-webkit-scrollbar-track {
+    background: #0F172A;
+    border-radius: 4px;
+  }
+  
+  .incident-content::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 4px;
+  }
+  
+  /* ============================================
+     INCIDENT HEADER
+     ============================================ */
+  
+  .incident-type-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 4px;
+    flex-wrap: wrap;
+  }
+  
+  .incident-type-header .fire-icon {
+    color: #EF4444;
+    font-size: 22px;
+  }
+  
+  .incident-type-header h4 {
+    font-size: 12px;
+    font-weight: 700;
+    color: #F8FAFC;
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+  
+  .incident-type-header .badge {
+    flex-shrink: 0;
+  }
+  
+  .incident-id {
+    color: #64748B;
+    font-size: 0.65rem;
+    margin-bottom: 8px;
+    overflow-wrap: anywhere;
+  }
+  
+  .badges-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+  
+  /* ============================================
+     BADGES
+     ============================================ */
+  
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 0.6rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+  
+  .badge-red { background: #3B1212; color: #F87171; }
+  .badge-orange { background: #78350F; color: #FCD34D; }
+  .badge-green { background: #14532D; color: #86EFAC; }
+  .badge-blue { background: #1E3A8A; color: #93C5FD; }
+  .badge-indigo { background: #1E3A8A; color: #93C5FD; }
+  .badge-gray { background: #1F2937; color: #94A3B8; }
+  .badge-purple { background: #3B1212; color: #A855F7; }
+  
+  /* ============================================
+     INFO GRID
+     ============================================ */
+  
+  .info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  
+  .info-item {
+    display: flex;
+    flex-direction: column;
+    padding: 6px 10px;
+    background: #0F172A;
+    border-radius: 6px;
+    border: 1px solid #2B3648;
+  }
+  
+  .info-item.full-width {
+    grid-column: 1 / -1;
+  }
+  
+  .info-item .label {
+    font-size: 0.55rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #64748B;
+    font-weight: 600;
+  }
+  
+  .info-item .value {
+    font-weight: 500;
+    color: #F8FAFC;
+    font-size: 0.8rem;
+    margin-top: 1px;
+    overflow-wrap: anywhere;
+  }
+  
+  .info-item .value i {
+    margin-right: 4px;
+    color: #64748B;
+    width: 14px;
+  }
+  
+  /* ============================================
+     LOCATION COORDS PILL
+     ============================================ */
+  
+  .location-coords {
+    margin-top: 8px;
+    padding: 6px 10px;
+    background: #1E3A8A;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: #93C5FD;
+  }
+  
+  .location-coords i {
+    font-size: 12px;
+  }
+  
+  /* ============================================
+     LOCATION DETAILS SECTION
+     ============================================ */
+  
+  .location-details-section {
+    margin-top: 10px;
+    padding: 10px 12px;
+    background: #0F172A;
+    border-radius: 6px;
+    border: 1px solid #334155;
+  }
+  
+  .location-details-title {
+    font-weight: 600;
+    font-size: 0.65rem;
+    color: #94A3B8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  
+  .location-details-title i {
+    font-size: 11px;
+    color: #3B82F6;
+  }
+  
+  .location-details-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px 10px;
+  }
+  
+  .location-detail-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: #F8FAFC;
+    padding: 1px 0;
+  }
+  
+  .location-detail-item .label {
+    color: #64748B;
+    font-weight: 500;
+    min-width: 60px;
+  }
+  
+  .location-detail-item .value {
+    color: #F8FAFC;
+    font-weight: 500;
+  }
+  
+  .location-detail-item i {
+    color: #64748B;
+    font-size: 10px;
+    width: 12px;
+  }
+  
+  /* ============================================
+     RIGHT COLUMN
+     ============================================ */
+  
+  .right-column {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    height: 100%;
+    min-height: 0;
+    max-height: 100%;
+    overflow: hidden;
+  }
+  
+  /* ============================================
+     MAP CARD
+     ============================================ */
+  
+  .map-card {
+    flex: 1 1 auto;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    overflow: hidden;
+    background: #111827;
+    border-radius: 12px;
+    border: 1px solid #334155;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  }
+  
+  .map-card:hover {
+    border-color: #3B82F6;
+  }
+  
+  .leaflet-map-container {
+    margin: 0;
+    border-radius: 0;
+    overflow: hidden;
+    border: none;
+    flex: 1 1 auto;
+    min-height: 160px;
+    height: auto;
+    position: relative;
+    box-shadow: none;
+  }
+  
+  .leaflet-map-container > div {
+    width: 100% !important;
+    height: 100% !important;
+  }
+  
+  .leaflet-map-container .leaflet-container {
+    background: #1A2332 !important;
+    border-radius: 0 !important;
+  }
+  
+  .map-card .map-address {
+    padding: 10px 20px 4px 20px;
+  }
+  
+  .map-card .map-coords {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+  
+  .map-card .nearby-count {
+    padding: 4px 20px 20px 20px;
+  }
+  
+  .map-address {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #F8FAFC;
+    font-size: 0.85rem;
+    font-weight: 500;
+    padding: 4px 0;
+  }
+  
+  .map-address i {
+    color: #EF4444;
+  }
+  
+  .map-coords {
+    display: flex;
+    gap: 20px;
+    font-size: 0.8rem;
+    color: #94A3B8;
+    margin-top: 4px;
+  }
+  
+  .map-coords i {
+    color: #3B82F6;
+    width: 16px;
+    margin-right: 4px;
+  }
+  
+  .nearby-count {
+    margin-top: 4px;
+    font-size: 10px;
+    color: #86EFAC;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  
+  .nearby-count i {
+    font-size: 11px;
+  }
+  
+  /* ============================================
+     ACTIONS CARD
+     ============================================ */
+  
+  .actions-card {
+    margin-top: 0;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    background: transparent;
+    border: none;
+    padding: 0;
+    box-shadow: none;
+  }
+  
+  .actions-card .card-header {
+    display: none;
+  }
+  
+  .action-buttons-horizontal {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    align-content: start;
+  }
+  
+  .action-buttons-horizontal button {
+    border: none;
+    padding: 12px 14px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    color: #F8FAFC;
+  }
+  
+  .action-buttons-horizontal button i {
+    font-size: 1rem;
+  }
+  
+  .action-buttons-horizontal button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+  }
+  
+  .action-buttons-horizontal button:disabled:hover {
+    transform: none !important;
+    box-shadow: none !important;
+  }
+  
+  /* Button variants */
+  
+  .btn-verify {
+    background: #16A34A;
+  }
+  
+  .btn-verify:hover:not(:disabled) {
+    background: #22C55E;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+  }
+  
+  .btn-verify.btn-verified {
+    background: #334155 !important;
+    cursor: default !important;
+    opacity: 0.7 !important;
+  }
+  
+  .btn-verify.btn-verified:hover {
+    background: #334155 !important;
+    transform: none !important;
+    box-shadow: none !important;
+  }
+  
+  .btn-dispatch {
+    background: #2563EB;
+  }
+  
+  .btn-dispatch:hover:not(:disabled) {
+    background: #3B82F6;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+  }
+  
+  .btn-dispatch:disabled {
+    background: #334155 !important;
+    cursor: not-allowed !important;
+    opacity: 0.5 !important;
+  }
+  
+  .btn-dispatch:disabled:hover {
+    background: #334155 !important;
+    transform: none !important;
+    box-shadow: none !important;
+  }
+  
+  .btn-dispatch.btn-dispatched {
+    background: #334155 !important;
+    cursor: default !important;
+    opacity: 0.7 !important;
+  }
+  
+  .btn-dispatch.btn-dispatched:hover {
+    background: #334155 !important;
+    transform: none !important;
+    box-shadow: none !important;
+  }
+  
+  .btn-request {
+    background: #D97706;
+    color: #F8FAFC;
+  }
+  
+  .btn-request:hover:not(:disabled) {
+    background: #F59E0B;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+  }
+  
+  .btn-duplicate {
+    background: #DC2626;
+  }
+  
+  .btn-duplicate:hover:not(:disabled) {
+    background: #EF4444;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+  }
+  
+  .btn-duplicate:disabled {
+    background: #334155 !important;
+    cursor: not-allowed !important;
+    opacity: 0.5 !important;
+  }
+  
+  .btn-duplicate:disabled:hover {
+    background: #334155 !important;
+    transform: none !important;
+    box-shadow: none !important;
+  }
+  
+  /* ✅ Delete button — spans both columns (5th button on its own row) */
+  .btn-delete {
+    background: #7F1D1D;
+    grid-column: 1 / -1;
+  }
+  
+  .btn-delete:hover:not(:disabled) {
+    background: #DC2626;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+  }
+  
+  .btn-delete:disabled {
+    background: #334155 !important;
+    cursor: not-allowed !important;
+    opacity: 0.5 !important;
+  }
+  
+  .btn-delete:disabled:hover {
+    background: #334155 !important;
+    transform: none !important;
+    box-shadow: none !important;
+  }
+  
+  /* ============================================
+     LoRa-SPECIFIC HELPERS
+     ============================================ */
+  
+  .lora-type-badge {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: #EF4444;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  
+  .lora-signal-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 4px;
+  }
+  
+  .signal-good,
+  .signal-excellent {
+    color: #22C55E;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  
+  .signal-fair {
+    color: #F59E0B;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  
+  .signal-poor {
+    color: #EF4444;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  
+  .signal-good .lora-signal-dot,
+  .signal-excellent .lora-signal-dot {
+    background: #22C55E;
+  }
+  
+  .signal-fair .lora-signal-dot {
+    background: #F59E0B;
+  }
+  
+  .signal-poor .lora-signal-dot {
+    background: #EF4444;
+  }
+  
+  .mono {
+    font-family: 'Inter', sans-serif;
+  }
+  
+  /* ============================================
+     LOADING
+     ============================================ */
+  
+  .loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    color: #94A3B8;
+  }
+  
+  .loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #1A2332;
+    border-top: 4px solid #3B82F6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 16px;
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  
+  /* ============================================
+     LEAFLET OVERRIDES
+     ============================================ */
+  
+  .leaflet-control-zoom {
+    border: none !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+  }
+  
+  .leaflet-control-zoom a {
+    border-radius: 8px !important;
+    background: #1A2332 !important;
+    color: #F8FAFC !important;
+    border-color: #334155 !important;
+    transition: all 0.2s !important;
+  }
+  
+  .leaflet-control-zoom a:hover {
+    background: #1F2937 !important;
+    color: #3B82F6 !important;
+  }
+  
+  .leaflet-popup-content-wrapper {
+    border-radius: 12px !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
+    max-width: 350px !important;
+    background: #1A2332 !important;
+    border: 1px solid #334155 !important;
+  }
+  
+  .leaflet-popup-content {
+    margin: 10px 14px !important;
+    min-width: 220px !important;
+    max-width: 320px !important;
+    color: #F8FAFC !important;
+  }
+  
+  .leaflet-popup-close-button {
+    color: #94A3B8 !important;
+  }
+  
+  .leaflet-popup-tip {
+    background: #1A2332 !important;
+  }
+  
+  /* ============================================
+     SCROLLBAR
+     ============================================ */
+  
+  .incident-page::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .incident-page::-webkit-scrollbar-track {
+    background: #1A2332;
+    border-radius: 8px;
+  }
+  
+  .incident-page::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 8px;
+  }
+  
+  .incident-page::-webkit-scrollbar-thumb:hover {
+    background: #64748B;
+  }
+  
+  /* ============================================
+     RESPONSIVE
+     ============================================ */
+  
+  /* BIG SCREENS: grid fills the whole page, text scales up */
+  @media (min-width: 1600px) {
+    .incident-page { padding: 24px 32px; }
+    .card-header h5 { font-size: 1.05rem; }
+    .incident-type-header h4 { font-size: 16px; }
+    .badge { font-size: 0.7rem; padding: 3px 10px; }
+    .info-grid { gap: 12px; }
+    .info-item { padding: 10px 14px; }
+    .info-item .label { font-size: 0.7rem; }
+    .info-item .value { font-size: 0.95rem; }
+    .location-details-title { font-size: 0.75rem; }
+    .location-detail-item { font-size: 13px; }
+    .location-detail-item .label { min-width: 80px; }
+    .map-address { font-size: 0.95rem; }
+    .map-coords { font-size: 0.9rem; }
+    .action-buttons-horizontal { gap: 14px; }
+    .action-buttons-horizontal button { padding: 16px; font-size: 1rem; }
+  }
+
+  @media (min-width: 2200px) {
+    .incident-page { padding: 32px 48px; }
+    .card-header h5 { font-size: 1.2rem; }
+    .incident-type-header h4 { font-size: 20px; }
+    .badge { font-size: 0.8rem; padding: 4px 12px; }
+    .info-grid { gap: 16px; }
+    .info-item { padding: 14px 18px; }
+    .info-item .label { font-size: 0.8rem; }
+    .info-item .value { font-size: 1.1rem; }
+    .location-details-title { font-size: 0.85rem; }
+    .location-detail-item { font-size: 15px; }
+    .map-address { font-size: 1.1rem; }
+    .map-coords { font-size: 1rem; }
+    .action-buttons-horizontal { gap: 18px; }
+    .action-buttons-horizontal button { padding: 20px; font-size: 1.15rem; }
+  }
+
+  /* SHORT-BUT-WIDE (1366x768, 1440x900): keep actions row visible */
+  @media (min-width: 1101px) and (max-height: 820px) {
+    .map-card {
+      min-height: 160px;
+    }
+    .leaflet-map-container {
+      min-height: 130px;
+    }
+  }
+  
+  @media (max-width: 1100px) {
+    .incident-grid {
+      grid-template-columns: 1fr;
+      height: auto;
+      max-height: none;
+      overflow: visible;
+    }
+  
+    .incident-page {
+      overflow-y: auto;
+    }
+  
+    .incident-grid > .details-card,
+    .incident-grid > .right-column {
+      height: auto;
+      max-height: none;
+      overflow: visible;
+    }
+  
+    .incident-content {
+      flex: 0 1 auto;
+      max-height: 420px;
+    }
+  
+    .map-card {
+      flex: none;
+      min-height: 280px;
+    }
+  
+    .leaflet-map-container {
+      flex: none;
+      height: 280px;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .incident-page {
+      left: 0;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      padding: 16px;
+      overflow-y: auto;
+    }
+  
+    .page-content.sidebar-closed .incident-page {
+      left: 0;
+    }
+  
+    .info-grid {
+      grid-template-columns: 1fr;
+    }
+  
+    .action-buttons-horizontal {
+      grid-template-columns: 1fr 1fr;
+    }
+  
+    .leaflet-map-container {
+      height: 220px;
+    }
+  
+    .map-card {
+      min-height: 220px;
+    }
+  
+    .location-details-grid {
+      grid-template-columns: 1fr;
+    }
+  
+    .right-column {
+      gap: 16px !important;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .incident-page {
+      padding: 16px;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      overflow-y: auto;
+    }
+  
+    .page-content.sidebar-closed .incident-page {
+      left: 0;
+    }
+  
+    .action-buttons-horizontal {
+      grid-template-columns: 1fr;
+    }
+  
+    .action-buttons-horizontal button {
+      font-size: 0.8rem;
+      padding: 10px;
+    }
+  
+    /* On mobile the delete button already spans full width by default,
+       so no need for grid-column: 1 / -1 override here */
+    .btn-delete {
+      grid-column: auto;
+    }
+  
+    .card-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+    }
+  
+    .badges-row {
+      flex-wrap: wrap;
+    }
+  
+    .leaflet-map-container {
+      height: 180px;
+    }
+  
+    .map-card {
+      min-height: 180px;
+    }
+  
+    .leaflet-popup-content {
+      min-width: 160px !important;
+    }
+  
+    .location-detail-item {
+      font-size: 10px;
+    }
+  
+    .location-detail-item .label {
+      min-width: 50px;
+    }
+  
+    .right-column {
+      gap: 12px !important;
+    }
+  }
+
+/* ============================================
+   FORCE FULL-SCREEN FILL (overrides any other stylesheet)
+   Keep this block at the VERY BOTTOM of the file.
+   ============================================ */
+.incident-page .incident-grid {
+  flex: 1 1 auto !important;
+  height: auto !important;
+  max-width: none !important;
+  width: 100% !important;
+  margin: 0 !important;
+  align-items: stretch !important;
+  min-height: 0 !important;
+}
+
+.incident-page .incident-grid > .details-card,
+.incident-page .incident-grid > .right-column {
+  height: 100% !important;
+  max-height: 100% !important;
+  min-height: 0 !important;
+}
+
+.incident-page .incident-content {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+}
+
+.incident-page .map-card {
+  flex: 1 1 auto !important;
+}
+
+.incident-page .leaflet-map-container {
+  flex: 1 1 auto !important;
+  height: auto !important;
+}
+
+@media (min-width: 1600px) {
+  .incident-page .incident-type-header h4 { font-size: 18px !important; }
+  .incident-page .badge { font-size: 0.75rem !important; padding: 3px 10px !important; }
+  .incident-page .info-item { padding: 12px 16px !important; }
+  .incident-page .info-item .label { font-size: 0.75rem !important; }
+  .incident-page .info-item .value { font-size: 1rem !important; }
+  .incident-page .card-header h5 { font-size: 1.15rem !important; }
+  .incident-page .map-address { font-size: 1rem !important; }
+  .incident-page .action-buttons-horizontal button { padding: 18px !important; font-size: 1.05rem !important; }
+}
+
+@media (max-width: 1100px) {
+  .incident-page .incident-grid > .details-card,
+  .incident-page .incident-grid > .right-column {
+    height: auto !important;
+    max-height: none !important;
+  }
+  .incident-page .leaflet-map-container {
+    flex: none !important;
+    height: 280px !important;
+  }
+}

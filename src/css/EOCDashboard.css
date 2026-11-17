@@ -1,0 +1,2115 @@
+/* EOCDashboard.css - Full Screen Map Version - Dark Theme
+   Compact sidebar version. Change --sidebar-w to resize the sidebar.
+   Collapsed (icon-only) sidebar: change --sidebar-rail-w. */
+   :root {
+    --primary: #EB1616;
+    --secondary: #1a1a1a;
+    --light: #6C7293;
+    --dark: #000000;
+    --main-bg: #08111F;
+    --sidebar-bg: #0B1938;       /* sidebar background */
+    --header-bg: #0B1938;        /* top navbar background */
+    --card-bg: #101B2B;
+    --map-bg: #0D1726;
+    --border-color: #2A3B52;
+    --card-hover: #14243A;
+
+    /* Layout */
+    --sidebar-w: 155px;          /* was 235px */
+    --navbar-h: 36px;            /* was 60px - change this to resize the header */
+
+    /* Sidebar palette */
+    --sb-accent: #2f80ff;
+    --sb-active-bg: rgba(47, 128, 255, 0.16);
+    --sb-text: #c3cddb;
+    --sb-muted: #8A9BB0;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    overflow: hidden;
+    background: var(--main-bg);
+}
+
+/* Fullscreen Container */
+.eoc-fullscreen-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background: var(--main-bg);
+}
+
+/* Fullscreen Spinner */
+.fullscreen-spinner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--main-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 99999;
+}
+
+/* ============================================ */
+/* SIDEBAR - COMPACT                            */
+/* ============================================ */
+
+.eoc-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: var(--sidebar-w);
+    height: 100vh;
+    background: var(--sidebar-bg);
+    z-index: 1000;
+    transform: translateX(0);
+    transition: transform 0.3s ease, scrollbar-color 0.3s ease;
+    overflow-y: auto;
+    overflow-x: hidden;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
+    border-right: 1px solid var(--border-color);
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+}
+
+/* Hidden when the 'open' class is missing */
+.eoc-sidebar:not(.open) {
+    transform: translateX(calc(-1 * var(--sidebar-w)));
+}
+
+/* Header: logo + hamburger (same height as the top navbar) */
+.sidebar-header {
+    height: var(--navbar-h);
+    padding: 0 12px 0 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.sidebar-brand {
+    text-decoration: none;
+}
+
+.sidebar-brand h3 {
+    display: flex;
+    align-items: center;
+    margin: 0;
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: #ffffff !important;
+}
+
+.sidebar-brand h3 i {
+    font-size: 18px;
+    color: var(--sb-accent);
+    margin-right: 8px !important;
+}
+
+/* Hamburger INSIDE sidebar (right side) */
+.sidebar-toggler {
+    background: none;
+    border: none;
+    color: var(--sb-text);
+    font-size: 18px;
+    cursor: pointer;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+}
+
+.sidebar-toggler:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+}
+
+/* FLOATING HAMBURGER - Visible when sidebar is closed */
+.sidebar-toggler-floating {
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    z-index: 2000;
+    background: var(--primary);
+    color: white;
+    width: 45px;
+    height: 45px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+    animation: fadeIn 0.3s ease;
+}
+
+.sidebar-toggler-floating:hover {
+    background: #ff4444;
+    transform: scale(1.05);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* USER INFO - HIDDEN */
+.user-info {
+    display: none !important;
+}
+
+/* Sidebar navigation container */
+.sidebar-nav {
+    padding: 12px 0 14px;
+    display: flex;
+    flex-direction: column;
+    height: calc(100% - var(--navbar-h));
+}
+
+/* Section labels (OVERVIEW / OPERATIONS) */
+.nav-section-label {
+    display: block;
+    padding: 8px 18px 6px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--sb-muted);
+    user-select: none;
+}
+
+.nav-section-label.with-divider {
+    margin: 10px 10px 0;
+    padding: 14px 8px 6px;
+    border-top: 1px solid var(--border-color);
+}
+
+/* Generic nav link (also used by the top navbar icons) */
+.nav-link {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    margin: 3px 0;
+    color: #6C7293;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border-left: 3px solid transparent;
+    font-size: 15px;
+    font-weight: 500;
+    border-radius: 0 8px 8px 0;
+}
+
+.nav-link i {
+    width: 24px;
+    font-size: 17px;
+    margin-right: 14px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.nav-link:hover {
+    color: var(--primary);
+    background: var(--card-hover);
+    border-left-color: rgba(235, 22, 22, 0.5);
+    transform: translateX(2px);
+}
+
+.nav-link.active {
+    color: #ffffff;
+    background: var(--card-hover);
+    border-left-color: var(--primary);
+    box-shadow: inset 0 0 20px rgba(235, 22, 22, 0.05);
+}
+
+.nav-link.active i {
+    color: var(--primary);
+}
+
+/* Sidebar links (compact, blue active state) */
+.eoc-sidebar .nav-link {
+    margin: 2px 10px;
+    padding: 9px 12px;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--sb-text);
+    border-left: 0;
+    border-radius: 8px;
+    transform: none;
+    box-shadow: none;
+}
+
+.eoc-sidebar .nav-link i {
+    width: 20px;
+    margin-right: 10px;
+    font-size: 15px;
+    color: var(--sb-muted);
+}
+
+.eoc-sidebar .nav-link:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.05);
+    transform: none;
+}
+
+.eoc-sidebar .nav-link:hover i {
+    color: #ffffff;
+}
+
+.eoc-sidebar .nav-link.active {
+    color: #ffffff;
+    background: var(--sb-active-bg);
+    box-shadow: inset 3px 0 0 var(--sb-accent);
+}
+
+.eoc-sidebar .nav-link.active i {
+    color: #ffffff;
+}
+
+/* Logout - bottom of sidebar */
+.sidebar-logout {
+    margin: auto 10px 0;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-color);
+}
+
+.eoc-sidebar .sidebar-logout .nav-link {
+    margin: 0;
+}
+
+.logout-link {
+    color: var(--sb-text) !important;
+    font-size: 13.5px !important;
+    font-weight: 500 !important;
+    transition: all 0.3s;
+}
+
+.logout-link i {
+    color: var(--sb-muted) !important;
+    font-size: 15px !important;
+}
+
+.logout-link:hover {
+    background: rgba(255, 107, 107, 0.08) !important;
+    color: #ff6b6b !important;
+    transform: none;
+}
+
+.logout-link:hover i {
+    color: #ff6b6b !important;
+}
+
+/* Sidebar scrollbar - visible only on hover */
+.eoc-sidebar:hover {
+    scrollbar-color: var(--sb-accent) var(--sidebar-bg);
+}
+
+.eoc-sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.eoc-sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.eoc-sidebar::-webkit-scrollbar-thumb {
+    background: transparent;
+    border-radius: 3px;
+}
+
+.eoc-sidebar:hover::-webkit-scrollbar-thumb {
+    background: var(--sb-accent);
+}
+
+/* Logout animation state: no scrollbars at all */
+.eoc-sidebar.logging-out,
+.eoc-sidebar.logging-out * {
+    overflow: hidden !important;
+}
+
+.eoc-sidebar.logging-out {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+}
+
+.eoc-sidebar.logging-out::-webkit-scrollbar {
+    width: 0 !important;
+    height: 0 !important;
+    display: none !important;
+}
+
+body.logging-out {
+    overflow: hidden !important;
+}
+
+/* ============================================ */
+/* TOP NAVBAR                                   */
+/* ============================================ */
+
+.eoc-top-navbar {
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: var(--sidebar-w);
+    height: var(--navbar-h);
+    background: var(--header-bg);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 20px;
+    z-index: 999;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    transition: left 0.3s ease;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* When sidebar is closed, navbar extends fully to left */
+.eoc-top-navbar.sidebar-closed {
+    left: 0;
+}
+
+.search-box {
+    display: flex;
+    align-items: center;
+    background: var(--main-bg);
+    border-radius: 8px;
+    padding: 8px 15px;
+    width: 280px;
+    max-width: 500px;
+    margin: 0 auto;
+    border: 1px solid var(--border-color);
+    margin-left: 190px;
+}
+
+.search-box i {
+    color: #6C7293;
+    margin-right: 10px;
+    font-size: 16px;
+}
+
+.search-box input {
+    border: none;
+    background: none;
+    outline: none;
+    width: 100%;
+    font-size: 15px;
+    color: #ffffff;
+}
+
+.search-box input::placeholder {
+    color: #6C7293;
+    font-size: 14px;
+}
+
+.navbar-actions {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    position: absolute;
+    right: 30px;
+}
+
+.navbar-actions .nav-link {
+    position: relative;
+    color: #6C7293;
+    font-size: 20px;
+    text-decoration: none;
+    padding: 0;
+    border: none;
+}
+
+.navbar-actions .nav-link .badge {
+    position: absolute;
+    top: -8px;
+    right: -12px;
+    background: var(--primary);
+    color: white;
+    font-size: 11px;
+    padding: 2px 5px;
+    border-radius: 10px;
+}
+
+.navbar-actions img {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+}
+
+/* ✅ FIX: Remove the dropdown triangle/arrow icons in the navbar */
+.eoc-top-navbar .dropdown-toggle::after,
+.eoc-top-navbar .nav-link::after,
+.eoc-top-navbar button::after {
+    display: none !important;
+    content: none !important;
+}
+
+.nav-divider {
+    width: 1px;
+    height: 30px;
+    background: var(--border-color);
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+}
+
+/* ============================================ */
+/* PAGE CONTENT                                 */
+/* ============================================ */
+
+.page-content {
+    padding: 20px;
+    margin-left: var(--sidebar-w);
+    margin-top: var(--navbar-h);
+    min-height: calc(100vh - var(--navbar-h));
+    background-color: var(--main-bg);
+    transition: margin-left 0.3s ease;
+    overflow-y: auto;
+}
+
+/* When sidebar is closed, content expands */
+.page-content.sidebar-closed {
+    margin-left: 0;
+}
+
+/* Dashboard content wrapper */
+.dashboard-content {
+    transition: margin-left 0.3s ease;
+}
+
+/* ============================================ */
+/* ✅ FIXED: CENTERED TOP STATS OVERLAY         */
+/* ============================================ */
+.top-stats-overlay {
+    position: absolute;
+    top: calc(var(--navbar-h) + 25px); /* Below the top navbar */
+    left: 50%;
+    transform: translateX(-50%);
+
+    /* ✅ FIX: Lower z-index so it stays BEHIND the notification modals */
+    z-index: 900;
+
+    display: flex;
+    flex-direction: row; /* Ensure cards are side-by-side */
+    gap: 16px;
+    pointer-events: none; /* Let clicks pass through the empty space */
+    width: max-content;
+}
+
+.top-stats-overlay .stat-card-item {
+    pointer-events: auto;
+    background: rgba(16, 27, 43, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    border-radius: 12px;
+
+    /* ✅ FIX: Layout */
+    display: flex;
+    flex-direction: row; /* Icon left, text right */
+    align-items: center;
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 10px 18px;
+    min-width: 170px;
+    height: auto; /* Prevent stretching */
+}
+
+.top-stats-overlay .stat-card-item:hover {
+    background: rgba(20, 36, 58, 0.98);
+    border-color: var(--primary);
+    transform: translateY(-2px);
+}
+
+/* ✅ FIX: Force Text to White */
+.top-stats-overlay .stat-info-small {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.top-stats-overlay .stat-info-small p {
+    color: #8A9BB0 !important; /* Light gray for label */
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.top-stats-overlay .stat-info-small h4 {
+    color: #ffffff !important; /* White for the number */
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0;
+    line-height: 1.2;
+}
+
+/* ✅ FIX: Icon Styling */
+.top-stats-overlay .stat-icon-small {
+    background: rgba(235, 22, 22, 0.15); /* Red background tint */
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.top-stats-overlay .stat-icon-small i {
+    color: #EB1616 !important; /* Red icon */
+    font-size: 16px;
+}
+
+/* ============================================ */
+/* ✅ EXTERNAL MAP TYPE TOGGLE                   */
+/* ============================================ */
+.map-type-toggle-external {
+    position: absolute;
+    top: calc(var(--navbar-h) + 25px); /* Aligned with stats overlay */
+    right: 20px; /* Top right corner */
+
+    /* ✅ FIX: Lower z-index so it stays BEHIND the notification modals */
+    z-index: 900;
+
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    background: rgba(30, 41, 59, 0.95);
+    backdrop-filter: blur(8px);
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 4px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+}
+
+.map-type-toggle-external:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.map-type-toggle-external button {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: transparent;
+    color: #94A3B8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.map-type-toggle-external button:hover {
+    background: rgba(37, 99, 235, 0.15);
+    color: #F8FAFC;
+}
+
+.map-type-toggle-external button.active {
+    background: #2563EB;
+    color: white;
+    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
+}
+
+.map-type-toggle-external button.active:hover {
+    background: #3B82F6;
+}
+
+.map-type-toggle-external button .tooltip {
+    position: absolute;
+    right: 40px; /* Tooltip on the left side */
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    font-weight: 500;
+}
+
+.map-type-toggle-external button:hover .tooltip {
+    opacity: 1;
+}
+
+.map-type-toggle-external .divider {
+    width: 100%;
+    height: 1px;
+    background: #334155;
+    margin: 2px 0;
+}
+
+/* ============================================ */
+/* ❌ REMOVED: STATS SIDEBAR & LIVE FEED        */
+/* ============================================ */
+
+/* ============================================================
+   ✅ LIVE UPDATES BADGE (Matches the image)
+   ============================================================ */
+
+/* Position it top-right, beside the map toggle */
+.legend-overlay-left {
+    position: fixed;
+    top: calc(var(--navbar-h) + 25px);
+    right: 76px; /* Offset to sit left of the map toggle */
+    left: auto;
+    bottom: auto;
+    background: #0F172A; /* Dark navy pill */
+    border: 1px solid #1E293B;
+    border-radius: 999px; /* Pill shape */
+    padding: 8px 16px;
+    z-index: 900;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* The container inside the badge */
+.live-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+/* The green glowing dot */
+.live-status i.fa-circle,
+.live-status .text-danger {
+    color: #22C55E !important; /* Bright green */
+    font-size: 12px;
+    animation: pulse-green 1.5s infinite;
+    margin: 0;
+}
+
+/* Green pulse animation */
+@keyframes pulse-green {
+    0% {
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+        opacity: 1;
+    }
+    70% {
+        box-shadow: 0 0 0 6px rgba(34, 197, 94, 0);
+        opacity: 0.7;
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+        opacity: 1;
+    }
+}
+
+/* ============================================ */
+/* RESPONSIVE                                   */
+/* ============================================ */
+
+@media (max-width: 1200px) {
+    .top-stats-overlay .stat-card-item {
+        min-width: 150px;
+        padding: 10px 14px;
+    }
+}
+
+@media (max-width: 992px) {
+    .top-stats-overlay {
+        gap: 10px;
+        top: 75px;
+    }
+
+    .top-stats-overlay .stat-card-item {
+        min-width: 130px;
+        padding: 8px 10px;
+        gap: 8px;
+    }
+
+    .map-type-toggle-external {
+        top: 75px;
+    }
+}
+
+@media (max-width: 768px) {
+    :root {
+        --navbar-h: 36px;
+    }
+
+    .eoc-top-navbar {
+        left: 0;
+        padding: 0 15px;
+    }
+
+    .eoc-top-navbar.sidebar-closed {
+        left: 0;
+    }
+
+    .navbar-actions {
+        right: 10px;
+        gap: 12px;
+    }
+
+    .navbar-actions .nav-link {
+        font-size: 18px;
+    }
+
+    .page-content,
+    .page-content.sidebar-closed {
+        margin-left: 0;
+    }
+
+    .sidebar-toggler-floating {
+        width: 40px;
+        height: 40px;
+        top: 10px;
+        left: 10px;
+        font-size: 18px;
+    }
+
+    /* Adjust top stats for mobile */
+    .top-stats-overlay {
+        top: 70px;
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: center;
+        width: 90%;
+    }
+
+    .top-stats-overlay .stat-card-item {
+        min-width: 100px;
+        padding: 6px 8px;
+        gap: 6px;
+    }
+
+    .top-stats-overlay .stat-info-small p {
+        font-size: 9px;
+    }
+
+    .top-stats-overlay .stat-info-small h4 {
+        font-size: 14px;
+    }
+
+    .top-stats-overlay .stat-icon-small {
+        width: 28px;
+        height: 28px;
+    }
+
+    .top-stats-overlay .stat-icon-small i {
+        font-size: 14px;
+    }
+
+    .map-type-toggle-external {
+        top: 70px;
+        right: 10px;
+    }
+
+    .legend-overlay-left {
+        top: 70px;
+        right: 70px;
+        padding: 6px 12px;
+    }
+}
+
+@media (max-width: 576px) {
+    :root {
+        --sidebar-w: 180px;
+        --navbar-h: 34px;
+    }
+
+    .eoc-top-navbar {
+        padding: 0 10px;
+    }
+
+    .navbar-actions {
+        gap: 8px;
+        right: 5px;
+    }
+
+    .navbar-actions .nav-link {
+        font-size: 16px;
+        padding: 4px;
+    }
+
+    .nav-divider {
+        height: 20px;
+    }
+
+    .sidebar-toggler-floating {
+        width: 35px;
+        height: 35px;
+        top: 10px;
+        left: 10px;
+        font-size: 14px;
+    }
+
+    .legend-overlay-left {
+        right: 60px;
+        top: 65px;
+        padding: 4px 10px;
+    }
+
+    .sidebar-header {
+        padding: 0 10px 0 14px;
+    }
+
+    .sidebar-brand h3 {
+        font-size: 18px;
+    }
+
+    /* Stack stats vertically on very small screens */
+    .top-stats-overlay {
+        flex-direction: row;
+        flex-wrap: wrap;
+        width: 95%;
+        gap: 5px;
+        top: 65px;
+    }
+
+    .top-stats-overlay .stat-card-item {
+        flex: 1 1 30%;
+        min-width: 80px;
+        padding: 4px 6px;
+        gap: 4px;
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .top-stats-overlay .stat-info-small p {
+        font-size: 7px;
+    }
+
+    .top-stats-overlay .stat-info-small h4 {
+        font-size: 12px;
+    }
+
+    .top-stats-overlay .stat-icon-small {
+        width: 22px;
+        height: 22px;
+    }
+
+    .top-stats-overlay .stat-icon-small i {
+        font-size: 11px;
+    }
+
+    .map-type-toggle-external {
+        top: 65px;
+        right: 5px;
+        padding: 2px;
+    }
+
+    .map-type-toggle-external button {
+        width: 28px;
+        height: 28px;
+        font-size: 12px;
+    }
+}
+
+/* ============================================================
+   ICON-ONLY COLLAPSED SIDEBAR (desktop)
+   Clicking the hamburger shrinks the sidebar to an icon rail
+   instead of hiding it. Mobile (<=768px) keeps the old behavior
+   (fully hidden + floating hamburger).
+   ============================================================ */
+:root {
+    --sidebar-rail-w: 48px;   /* width of the icon-only sidebar */
+}
+
+@media (min-width: 769px) {
+
+    /* Sidebar: animate width, and stay visible when closed */
+    .eoc-sidebar {
+        transition: width 0.3s ease, transform 0.3s ease, scrollbar-color 0.3s ease;
+    }
+
+    .eoc-sidebar:not(.open) {
+        transform: translateX(0);
+        width: var(--sidebar-rail-w);
+        overflow-x: hidden;
+    }
+
+    /* The hamburger lives inside the rail now, so hide the floating one */
+    .sidebar-toggler-floating {
+        display: none !important;
+    }
+
+    /* Header: only the hamburger, centered */
+    .eoc-sidebar:not(.open) .sidebar-header {
+        padding: 0;
+        justify-content: center;
+    }
+
+    .eoc-sidebar:not(.open) .sidebar-brand {
+        display: none;
+    }
+
+    /* Nav links: hide the text, keep only the centered icon */
+    .eoc-sidebar:not(.open) .nav-link {
+        font-size: 0;                 /* hides the text label */
+        justify-content: center;
+        padding: 10px 0;
+        margin: 4px 6px;
+    }
+
+    .eoc-sidebar:not(.open) .nav-link i {
+        margin: 0;
+        width: auto;
+        font-size: 17px;              /* keeps the icon visible */
+    }
+
+    /* Logout link uses !important in the base CSS, so match it */
+    .eoc-sidebar:not(.open) .logout-link {
+        font-size: 0 !important;
+    }
+
+    .eoc-sidebar:not(.open) .logout-link i {
+        font-size: 17px !important;
+    }
+
+    /* Section labels: hide the text, keep the divider line */
+    .eoc-sidebar:not(.open) .nav-section-label {
+        font-size: 0;
+        padding: 0;
+        margin: 0 14px;
+    }
+
+    .eoc-sidebar:not(.open) .nav-section-label.with-divider {
+        margin: 10px 10px 8px;
+    }
+
+    /* Push the top navbar and page content to the right of the rail */
+    .eoc-top-navbar.sidebar-closed {
+        left: var(--sidebar-rail-w);
+    }
+
+    .page-content.sidebar-closed {
+        margin-left: var(--sidebar-rail-w);
+    }
+
+    /* Keep the "Live Updates" badge visible beside the rail */
+    .eoc-fullscreen-container:has(.eoc-sidebar:not(.open)) .legend-overlay-left {
+        left: auto !important;
+    }
+}
+
+/* ============================================================
+   HEADER HEIGHT LOCK
+   !important so no other stylesheet (Bootstrap, component CSS)
+   can make the top header or the sidebar header taller.
+   Size is controlled by --navbar-h at the top of this file.
+   ============================================================ */
+.eoc-top-navbar {
+    height: var(--navbar-h) !important;
+    min-height: 0 !important;
+    max-height: var(--navbar-h) !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+.sidebar-header {
+    height: var(--navbar-h) !important;
+    min-height: 0 !important;
+}
+
+.page-content {
+    margin-top: var(--navbar-h) !important;
+}
+
+/* ============================================================
+   PAGE CLEARANCE FIX (Incident Intake etc.)
+   IncidentIntake.css positions .incident-page with position:absolute
+   and hard-coded left/top values. With the icon-only sidebar the page
+   slid UNDER the rail, so its left edge got cut off. These rules make
+   it follow the real sidebar and header sizes.
+   ============================================================ */
+@media (min-width: 769px) {
+    /* sidebar expanded */
+    .page-content:not(.sidebar-closed) .incident-page {
+        left: var(--sidebar-w) !important;
+    }
+
+    /* sidebar collapsed to the icon rail */
+    .page-content.sidebar-closed .incident-page {
+        left: var(--sidebar-rail-w) !important;
+    }
+
+    /* follow the header height instead of a fixed 60px */
+    .page-content .incident-page {
+        top: var(--navbar-h) !important;
+    }
+}
+
+/* ============================================================
+   PAGE CLEARANCE FIX - Dispatch Responders
+   DispatchResponders.css hard-codes left:0 when the sidebar is closed,
+   so the page slid under the icon rail. Follow the real sizes instead.
+   ============================================================ */
+@media (min-width: 769px) {
+    .page-content:not(.sidebar-closed) .dispatch-responders-page {
+        left: var(--sidebar-w) !important;
+    }
+
+    .page-content.sidebar-closed .dispatch-responders-page {
+        left: var(--sidebar-rail-w) !important;
+    }
+
+    .page-content .dispatch-responders-page {
+        top: var(--navbar-h) !important;
+    }
+}
+
+/* ============================================================
+   NAVBAR ICONS: remove divider lines + bigger Settings icon
+   ============================================================ */
+
+/* Remove the vertical lines between the icons */
+.eoc-top-navbar .nav-divider {
+    display: none !important;
+}
+
+/* Bigger Settings icon (change these two numbers to resize) */
+:root {
+    --settings-size: 32px;   /* blue circle */
+    --settings-icon: 20px;   /* gear inside the circle */
+}
+
+.eocs-trigger .eocs-gear {
+    width: var(--settings-size) !important;
+    height: var(--settings-size) !important;
+}
+
+.eocs-trigger .eocs-gear svg {
+    width: var(--settings-icon) !important;
+    height: var(--settings-icon) !important;
+}
+
+/* ============================================================
+   NAVBAR ICON SPACING (change --navbar-icon-gap to adjust)
+   ============================================================ */
+:root {
+    --navbar-icon-gap: 40px;
+}
+
+@media (min-width: 769px) {
+    .eoc-top-navbar .navbar-actions {
+        gap: var(--navbar-icon-gap) !important;
+    }
+}
+
+/* ============================================================
+   LIVE UPDATES DOT: green instead of red
+   (!important because Bootstrap's .text-danger uses it too)
+   ============================================================ */
+.live-status .text-danger,
+.live-status i.fa-circle {
+    color: #22C55E !important;
+}
+
+/* ============================================================
+   LIVE UPDATES BADGE: stay BEHIND the navbar dropdowns
+   (the badge was z-index 999, same as the navbar, and it comes later
+   in the page, so it painted on top of the Settings dropdown)
+   ============================================================ */
+.legend-overlay-left {
+    z-index: 900 !important;
+}
+
+/* ============================================================
+   SETTINGS BUTTON (gear) - base styles
+   These live here so the button never falls back to the plain
+   white browser button, even if the other .eocs-* CSS is late
+   or missing. !important beats Bootstrap's button reset.
+   (The old arrow/chevron next to the gear was removed; the
+   About Portal icon replaced it - see the last block.)
+   ============================================================ */
+.eocs-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.eoc-top-navbar .eocs-trigger {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    outline: none;
+    padding: 0 !important;
+    margin: 0 !important;
+    cursor: pointer;
+    color: #c3cddb !important;
+    line-height: 1;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.eoc-top-navbar .eocs-trigger:focus-visible {
+    outline: 2px solid var(--sb-accent);
+    outline-offset: 2px;
+    border-radius: 50%;
+}
+
+/* Blue circle with the gear inside */
+.eoc-top-navbar .eocs-trigger .eocs-gear {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border-radius: 50% !important;
+    background: #3B6FD8 !important;
+    color: #ffffff !important;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.eoc-top-navbar .eocs-trigger:hover .eocs-gear,
+.eoc-top-navbar .eocs-trigger.open .eocs-gear {
+    background: #2f80ff !important;
+}
+
+.eoc-top-navbar .eocs-trigger .eocs-gear svg {
+    display: block;
+    fill: none !important;
+    stroke: currentColor !important;
+}
+
+/* ============================================================
+   SETTINGS DROPDOWN (.eocs-*) - full styles
+   Everything the EOCSettings component renders. Kept in this file
+   so the menu never shows up unstyled.
+   ============================================================ */
+:root {
+    --eocs-bg: #0E1B33;
+    --eocs-card: #14233F;
+    --eocs-card-2: #101D36;
+    --eocs-line: #25365A;
+    --eocs-text: #ffffff;
+    --eocs-muted: #9FB0CC;
+    --eocs-blue: #3B6FD8;
+    --eocs-blue-hi: #2f80ff;
+    --eocs-green: #22C55E;
+    --eocs-red: #ff6b6b;
+}
+
+/* ---- dropdown container ---- */
+.eocs-menu {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: -20px;
+    width: 340px;
+    max-width: calc(100vw - 20px);
+    max-height: calc(100vh - var(--navbar-h) - 24px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 12px;
+    background: var(--eocs-bg);
+    border: 1px solid var(--eocs-line);
+    border-radius: 16px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
+    color: var(--eocs-text);
+    font-size: 14px;
+    z-index: 3000;
+    scrollbar-width: thin;
+    scrollbar-color: #3a4d78 transparent;
+}
+
+.eocs-menu *,
+.eocs-modal * {
+    box-sizing: border-box;
+}
+
+/* Every icon inside the menu gets a safe default size
+   (this is what stops the giant phone icon) */
+.eocs-menu svg,
+.eocs-modal svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    display: block;
+}
+
+/* ---- header ---- */
+.eocs-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 4px 4px 12px;
+}
+
+.eocs-head-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: #1B2D52;
+    color: #6EA8FF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.eocs-head-icon svg { width: 22px; height: 22px; }
+
+.eocs-head-title { font-size: 17px; font-weight: 700; color: #fff; line-height: 1.2; }
+.eocs-head-sub   { font-size: 12.5px; color: var(--eocs-muted); margin-top: 2px; }
+
+/* ---- messages ---- */
+.eocs-success,
+.eocs-error {
+    padding: 8px 10px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    line-height: 1.4;
+    margin-top: 8px;
+}
+
+.eocs-success {
+    background: rgba(34, 197, 94, 0.12);
+    border: 1px solid rgba(34, 197, 94, 0.35);
+    color: #5EE19A;
+}
+
+.eocs-error {
+    background: rgba(255, 107, 107, 0.12);
+    border: 1px solid rgba(255, 107, 107, 0.35);
+    color: #ff9a9a;
+}
+
+/* ---- profile hero ---- */
+.eocs-hero {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px;
+    margin-bottom: 10px;
+    background: var(--eocs-card);
+    border: 1px solid var(--eocs-line);
+    border-radius: 14px;
+}
+
+.eocs-avatar {
+    position: relative;
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    background: #1B2D52;
+    border: 2px solid #3a4d78;
+    color: #cfe0ff;
+    font-size: 22px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.eocs-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.eocs-avatar-edit { cursor: pointer; margin: 0 auto 12px; width: 84px; height: 84px; border-radius: 50%; }
+
+.eocs-avatar-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.eocs-avatar-edit:hover .eocs-avatar-overlay { opacity: 1; }
+
+.eocs-hero-text { min-width: 0; }
+
+.eocs-hero-name {
+    font-size: 17px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 6px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.eocs-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: rgba(59, 111, 216, 0.22);
+    border: 1px solid rgba(110, 168, 255, 0.45);
+    color: #8DBBFF;
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+/* ---- info rows ---- */
+.eocs-info {
+    padding: 4px 14px;
+    margin-bottom: 10px;
+    background: var(--eocs-card);
+    border: 1px solid var(--eocs-line);
+    border-radius: 14px;
+}
+
+.eocs-info-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 0;
+}
+
+.eocs-info-row + .eocs-info-row { border-top: 1px solid var(--eocs-line); }
+
+.eocs-info-row svg { color: var(--eocs-muted); }
+
+.eocs-info-label { color: var(--eocs-muted); font-size: 13px; white-space: nowrap; }
+
+.eocs-info-value {
+    margin-left: auto;
+    min-width: 0;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: right;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ---- buttons ---- */
+.eocs-edit-btn,
+.eocs-row {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    background: var(--eocs-card);
+    border: 1px solid var(--eocs-line);
+    border-radius: 12px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.eocs-edit-btn { justify-content: center; }
+
+.eocs-edit-btn:hover,
+.eocs-row:hover { background: #1A2D50; border-color: #35508a; }
+
+.eocs-row-icon { display: flex; color: #6EA8FF; }
+.eocs-row-label { flex: 1; }
+
+.eocs-row-chev { width: 16px; height: 16px; color: var(--eocs-muted); transition: transform 0.2s ease; }
+.eocs-row.open .eocs-row-chev { transform: rotate(90deg); }
+
+.eocs-row-logout { margin-bottom: 0; }
+.eocs-row-logout .eocs-row-icon { color: var(--eocs-red); }
+.eocs-row-logout:hover { background: rgba(255, 107, 107, 0.1); border-color: rgba(255, 107, 107, 0.45); color: var(--eocs-red); }
+
+.eocs-btn {
+    padding: 9px 16px;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    font-size: 13.5px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.2s ease, opacity 0.2s ease;
+}
+
+.eocs-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.eocs-btn-primary { background: var(--eocs-blue); color: #fff; }
+.eocs-btn-primary:hover:not(:disabled) { background: var(--eocs-blue-hi); }
+.eocs-btn-ghost { background: transparent; border-color: var(--eocs-line); color: #cfd9ec; }
+.eocs-btn-ghost:hover:not(:disabled) { background: rgba(255, 255, 255, 0.06); }
+.eocs-full { width: 100%; margin-top: 10px; }
+
+/* ---- edit profile ---- */
+.eocs-edit { padding: 4px 0 10px; }
+.eocs-field { margin-bottom: 10px; }
+.eocs-field label,
+.eocs-card label {
+    display: block;
+    margin: 10px 0 5px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--eocs-muted);
+}
+.eocs-field label { margin-top: 0; }
+
+.eocs-field input,
+.eocs-plain-input,
+.eocs-pw-wrap input {
+    width: 100%;
+    padding: 10px 12px;
+    background: var(--eocs-card-2);
+    border: 1px solid var(--eocs-line);
+    border-radius: 10px;
+    color: #fff;
+    font-size: 13.5px;
+    font-family: inherit;
+    outline: none;
+}
+
+.eocs-field input:focus,
+.eocs-plain-input:focus,
+.eocs-pw-wrap input:focus { border-color: var(--eocs-blue-hi); box-shadow: 0 0 0 3px rgba(47, 128, 255, 0.18); }
+
+.eocs-field input::placeholder,
+.eocs-plain-input::placeholder,
+.eocs-pw-wrap input::placeholder { color: #6b7ea3; }
+
+.eocs-readonly { opacity: 0.65; cursor: not-allowed; }
+
+.eocs-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+
+/* ---- change password panel ---- */
+.eocs-panel { margin: 0 0 10px; }
+
+.eocs-panel-title {
+    margin: 4px 2px 8px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #cfe0ff;
+}
+
+.eocs-card {
+    padding: 12px 14px 14px;
+    margin-bottom: 12px;
+    background: var(--eocs-card);
+    border: 1px solid var(--eocs-line);
+    border-radius: 12px;
+}
+
+.eocs-card-desc { margin: 0 0 4px; font-size: 12.5px; color: var(--eocs-muted); }
+
+.eocs-pw-wrap { position: relative; }
+.eocs-pw-wrap input { padding-right: 40px; }
+
+.eocs-eye {
+    position: absolute;
+    top: 50%;
+    right: 8px;
+    transform: translateY(-50%);
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: var(--eocs-muted);
+    cursor: pointer;
+    border-radius: 6px;
+}
+.eocs-eye:hover { color: #fff; background: rgba(255, 255, 255, 0.08); }
+.eocs-eye svg { width: 17px; height: 17px; }
+
+.eocs-rules { list-style: none; margin: 8px 0 0; padding: 0; }
+.eocs-rules li { display: flex; align-items: center; gap: 8px; padding: 2px 0; font-size: 12px; color: #7f92b5; }
+.eocs-rules li.ok { color: var(--eocs-green); }
+.eocs-rule-icon { width: 14px; text-align: center; }
+
+.eocs-hint { margin: 10px 0 0; font-size: 12px; color: var(--eocs-muted); text-align: center; }
+
+/* ---- logout confirm modal (rendered in document.body) ---- */
+.eocs-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(2, 8, 20, 0.7);
+    backdrop-filter: blur(3px);
+}
+
+.eocs-modal {
+    width: 100%;
+    max-width: 360px;
+    padding: 24px;
+    text-align: center;
+    background: var(--eocs-bg);
+    border: 1px solid var(--eocs-line);
+    border-radius: 18px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+    color: #fff;
+}
+
+.eocs-modal-icon {
+    width: 52px;
+    height: 52px;
+    margin: 0 auto 12px;
+    border-radius: 50%;
+    background: rgba(255, 107, 107, 0.14);
+    color: var(--eocs-red);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.eocs-modal-icon svg { width: 26px; height: 26px; }
+
+.eocs-modal-title { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+.eocs-modal-text  { margin: 0 0 4px; font-size: 14px; color: #dbe5f7; }
+.eocs-modal-sub   { margin: 0 0 18px; font-size: 12.5px; color: var(--eocs-muted); }
+
+.eocs-modal-actions { display: flex; gap: 10px; }
+
+.eocs-modal-cancel,
+.eocs-modal-logout {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.eocs-modal-cancel { background: transparent; border: 1px solid var(--eocs-line); color: #cfd9ec; }
+.eocs-modal-cancel:hover:not(:disabled) { background: rgba(255, 255, 255, 0.06); }
+.eocs-modal-logout { background: #e5484d; border: 1px solid #e5484d; color: #fff; }
+.eocs-modal-logout:hover:not(:disabled) { background: #f0565b; }
+.eocs-modal-cancel:disabled,
+.eocs-modal-logout:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ---- small screens ---- */
+@media (max-width: 480px) {
+    .eocs-menu { position: fixed; top: calc(var(--navbar-h) + 6px); right: 10px; left: 10px; width: auto; }
+}
+
+/* ============================================================
+   SETTINGS GEAR: spins while the cursor is on the button
+   Change the number of seconds to make it faster / slower.
+   ============================================================ */
+@keyframes eocs-gear-spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
+.eoc-top-navbar .eocs-trigger .eocs-gear svg {
+    transform-origin: 50% 50%;
+}
+
+.eoc-top-navbar .eocs-trigger:hover .eocs-gear svg {
+    animation: eocs-gear-spin 2s linear infinite;
+}
+
+/* keep it spinning while the menu is open? change to 'running' below,
+   or delete this rule to stop the spin when the menu opens */
+.eoc-top-navbar .eocs-trigger.open:not(:hover) .eocs-gear svg {
+    animation: none;
+}
+
+/* respect people who turned off animations in their system settings */
+@media (prefers-reduced-motion: reduce) {
+    .eoc-top-navbar .eocs-trigger:hover .eocs-gear svg {
+        animation: none;
+    }
+}
+
+/* ============================================================
+   ACTIVE INCIDENTS CARD: heartbeat border that SPAWNS
+   (AppEOC.tsx adds the `has-active` class when
+   stats.activeIncidents > 0, and removes it when it goes to 0.)
+   Two red border rings pop out of the card and fade away
+   (lub... dub...), then repeat. No active incidents = no rings.
+   Change 1.4s to speed up / slow down the beat.
+   Change 14px to make the rings travel farther.
+   NOTE: no prefers-reduced-motion switch here on purpose, because
+   this is an emergency alert and must always be visible.
+   ============================================================ */
+.top-stats-overlay .stat-card-item.has-active {
+    position: relative !important;
+    border-color: rgba(235, 22, 22, 0.8) !important;
+    overflow: visible !important;
+}
+
+.top-stats-overlay .stat-card-item.has-active::before,
+.top-stats-overlay .stat-card-item.has-active::after {
+    content: '' !important;
+    display: block !important;
+    position: absolute !important;
+    top: -1px;
+    left: -1px;
+    right: -1px;
+    bottom: -1px;
+    border: 2px solid #EB1616;
+    border-radius: 12px;
+    background: transparent;
+    pointer-events: none;
+    z-index: -1;
+    opacity: 0;
+    animation: active-ring 1.4s ease-out infinite !important;
+}
+
+/* second ring = the "dub" of the lub-dub */
+.top-stats-overlay .stat-card-item.has-active::after {
+    animation-delay: 0.22s !important;
+}
+
+/* box-shadow spread grows the ring outward from the card edge */
+@keyframes active-ring {
+    0% {
+        opacity: 1;
+        box-shadow: 0 0 0 0 rgba(235, 22, 22, 0.75), 0 0 0 0 rgba(235, 22, 22, 0.35);
+    }
+    38% {
+        opacity: 0;
+        box-shadow: 0 0 0 14px rgba(235, 22, 22, 0), 0 0 22px 10px rgba(235, 22, 22, 0);
+    }
+    100% {
+        opacity: 0;
+        box-shadow: 0 0 0 14px rgba(235, 22, 22, 0), 0 0 22px 10px rgba(235, 22, 22, 0);
+    }
+}
+
+/* the red icon bounces with the beat */
+@keyframes active-icon-pump {
+    0%, 40%, 100% { transform: scale(1); }
+    8%  { transform: scale(1.22); }
+    18% { transform: scale(0.96); }
+    26% { transform: scale(1.12); }
+}
+
+.top-stats-overlay .stat-card-item.has-active .stat-icon-small {
+    animation: active-icon-pump 1.4s ease-in-out infinite !important;
+}
+
+/* ============================================================
+   SETTINGS DROPDOWN: COMPACT SIZE
+   To make it even smaller, lower --eocs-width and the font sizes.
+   ============================================================ */
+:root {
+    --eocs-width: 300px;   /* was 340px originally, 270px in the first compact version */
+}
+
+.eocs-menu {
+    width: var(--eocs-width);
+    padding: 10px;
+    border-radius: 14px;
+    font-size: 13px;
+}
+
+.eocs-menu svg,
+.eocs-modal svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* header */
+.eocs-head { gap: 10px; padding: 3px 3px 10px; }
+.eocs-head-icon { width: 36px; height: 36px; border-radius: 10px; }
+.eocs-head-icon svg { width: 18px; height: 18px; }
+.eocs-head-title { font-size: 15px; }
+.eocs-head-sub { font-size: 11.5px; margin-top: 1px; }
+
+/* messages */
+.eocs-success,
+.eocs-error { padding: 7px 9px; font-size: 11.5px; border-radius: 7px; }
+
+/* profile card */
+.eocs-hero { gap: 12px; padding: 11px; margin-bottom: 9px; border-radius: 12px; }
+.eocs-avatar { width: 52px; height: 52px; border-radius: 14px; font-size: 18px; }
+.eocs-avatar-edit { width: 72px; height: 72px; margin-bottom: 10px; }
+.eocs-hero-name { font-size: 15px; margin-bottom: 5px; }
+.eocs-badge { padding: 3px 10px; font-size: 11.5px; }
+
+/* info rows */
+.eocs-info { padding: 3px 12px; margin-bottom: 9px; border-radius: 12px; }
+.eocs-info-row { gap: 9px; padding: 10px 0; }
+.eocs-info-label { font-size: 12px; }
+.eocs-info-value { font-size: 12px; }
+
+/* buttons / rows */
+.eocs-edit-btn,
+.eocs-row {
+    gap: 9px;
+    padding: 10px 12px;
+    margin-bottom: 7px;
+    border-radius: 10px;
+    font-size: 13px;
+}
+.eocs-row-chev { width: 14px; height: 14px; }
+
+.eocs-btn { padding: 7px 14px; border-radius: 9px; font-size: 12.5px; }
+.eocs-full { margin-top: 9px; }
+
+/* edit profile */
+.eocs-field { margin-bottom: 9px; }
+.eocs-field label,
+.eocs-card label { margin: 9px 0 4px; font-size: 11.5px; }
+.eocs-field label { margin-top: 0; }
+
+.eocs-field input,
+.eocs-plain-input,
+.eocs-pw-wrap input {
+    padding: 8px 10px;
+    border-radius: 9px;
+    font-size: 12.5px;
+}
+.eocs-pw-wrap input { padding-right: 36px; }
+.eocs-eye { width: 24px; height: 24px; right: 7px; }
+.eocs-eye svg { width: 15px; height: 15px; }
+
+/* password panel */
+.eocs-panel-title { font-size: 12px; margin: 3px 2px 7px; }
+.eocs-card { padding: 10px 12px 12px; margin-bottom: 10px; border-radius: 11px; }
+.eocs-card-desc { font-size: 11.5px; }
+.eocs-rules li { font-size: 11px; padding: 1px 0; gap: 7px; }
+.eocs-hint { font-size: 11px; margin-top: 9px; }
+
+/* logout modal */
+.eocs-modal { max-width: 330px; padding: 20px; border-radius: 16px; }
+.eocs-modal-icon { width: 46px; height: 46px; margin-bottom: 11px; }
+.eocs-modal-icon svg { width: 22px; height: 22px; }
+.eocs-modal-title { font-size: 16px; }
+.eocs-modal-text { font-size: 13px; }
+.eocs-modal-sub { font-size: 11.5px; margin-bottom: 15px; }
+.eocs-modal-cancel,
+.eocs-modal-logout { padding: 9px 12px; font-size: 13px; border-radius: 9px; }
+
+/* ============================================================
+   EOC SETTINGS: ULTRA-COMPACT
+   Goal: Change Password + Forgot Password fit with no scrolling.
+   ============================================================ */
+.eocs-menu {
+    width: 290px;
+    padding: 8px;
+    border-radius: 12px;
+    font-size: 12.5px;
+}
+
+/* header */
+.eocs-head { padding: 2px 3px 6px; }
+.eocs-head-title { font-size: 14px; }
+.eocs-head-sub { font-size: 11px; margin-top: 0; }
+
+/* messages */
+.eocs-success,
+.eocs-error { padding: 5px 8px; font-size: 11px; margin-top: 5px; }
+
+/* profile card + info */
+.eocs-hero { padding: 8px 10px; margin-bottom: 6px; gap: 10px; }
+.eocs-avatar { width: 44px; height: 44px; font-size: 16px; }
+.eocs-hero-name { font-size: 14px; margin-bottom: 3px; }
+.eocs-badge { padding: 2px 9px; font-size: 11px; }
+.eocs-info { padding: 2px 10px; margin-bottom: 6px; }
+.eocs-info-row { padding: 7px 0; }
+
+/* rows / buttons */
+.eocs-edit-btn,
+.eocs-row { padding: 8px 10px; margin-bottom: 5px; font-size: 12.5px; }
+
+.eocs-btn { padding: 6px 12px; font-size: 12px; }
+.eocs-full { margin-top: 7px; }
+
+/* edit profile form */
+.eocs-avatar-edit { width: 56px; height: 56px; margin-bottom: 6px; }
+.eocs-field { margin-bottom: 6px; }
+.eocs-field label,
+.eocs-card label { margin: 6px 0 3px; font-size: 11px; }
+.eocs-field label { margin-top: 0; }
+.eocs-actions { margin-top: 8px; }
+
+.eocs-field input,
+.eocs-plain-input,
+.eocs-pw-wrap input { padding: 6px 9px; font-size: 12px; border-radius: 8px; }
+.eocs-pw-wrap input { padding-right: 32px; }
+.eocs-eye { width: 22px; height: 22px; right: 5px; }
+.eocs-eye svg { width: 14px; height: 14px; }
+
+/* password panel */
+.eocs-panel { margin: 0 0 6px; }
+.eocs-panel-title { font-size: 11.5px; margin: 2px 2px 5px; }
+.eocs-card { padding: 4px 10px 9px; margin-bottom: 7px; border-radius: 10px; }
+.eocs-card label:first-child { margin-top: 4px; }
+
+/* the single password rule message (shows only while New Password is focused) */
+.eocs-pw-hint {
+    margin-top: 4px;
+    font-size: 10.5px;
+    line-height: 1.35;
+    color: #8DBBFF;
+}
+
+/* logout */
+.eocs-row-logout { margin-bottom: 0; }
+
+/* ============================================================
+   ABOUT PORTAL ICON + DROPDOWN  (keep this block LAST)
+   The info icon sits to the right of the gear in the navbar and
+   toggles the "About NAGA READY" dropdown (same placement as the
+   Settings menu - no modal, no overlay).
+   ============================================================ */
+
+/* ---- the info icon in the navbar ---- */
+.eoc-top-navbar .eocs-about-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: var(--settings-size, 32px) !important;
+    height: var(--settings-size, 32px) !important;
+    margin: 0 0 0 14px !important;   /* space between the gear and the info icon */
+    padding: 0 !important;
+    border-radius: 50% !important;
+    background: transparent !important;
+    border: 1.5px solid #3B6FD8 !important;
+    color: #8DBBFF !important;
+    box-shadow: none !important;
+    cursor: pointer;
+    flex-shrink: 0;
+    -webkit-appearance: none;
+    appearance: none;
+    transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.eoc-top-navbar .eocs-about-btn:hover {
+    background: #3B6FD8 !important;
+    color: #ffffff !important;
+    transform: scale(1.05);
+}
+
+/* stays filled while the About dropdown is open */
+.eoc-top-navbar .eocs-about-btn.open {
+    background: #3B6FD8 !important;
+    color: #ffffff !important;
+}
+
+.eoc-top-navbar .eocs-about-btn:focus-visible {
+    outline: 2px solid var(--sb-accent);
+    outline-offset: 2px;
+}
+
+.eoc-top-navbar .eocs-about-btn svg {
+    width: 18px !important;
+    height: 18px !important;
+    display: block;
+    fill: none !important;
+    stroke: currentColor !important;
+}
+
+/* ---- About dropdown (same placement as the Settings menu) ---- */
+.eocs-about-menu,
+.eocs-about-menu * {
+    box-sizing: border-box;
+}
+
+.eocs-about-menu {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: -20px;
+    width: 360px;
+    max-width: calc(100vw - 20px);
+    max-height: calc(100vh - var(--navbar-h) - 24px);
+    display: flex;
+    flex-direction: column;
+    background: #0E1B33;
+    border: 1px solid #25365A;
+    border-radius: 14px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
+    color: #ffffff;
+    font-family: 'Inter', sans-serif;
+    overflow: hidden;
+    z-index: 3000;
+}
+
+.eocs-aboutm-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-bottom: 1px solid #25365A;
+    flex-shrink: 0;
+}
+
+.eocs-aboutm-logo {
+    width: 44px;
+    height: 44px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.eocs-aboutm-headtext { flex: 1; min-width: 0; }
+.eocs-aboutm-title { font-size: 17px; font-weight: 700; line-height: 1.2; }
+.eocs-aboutm-sub { font-size: 12px; color: #9FB0CC; margin-top: 2px; }
+
+.eocs-aboutm-body {
+    padding: 14px 18px 16px;
+    overflow-y: auto;
+    font-size: 13px;
+    line-height: 1.55;
+    color: #dbe5f7;
+    scrollbar-width: thin;
+    scrollbar-color: #3a4d78 transparent;
+}
+
+.eocs-aboutm-body p { margin: 0 0 10px; }
+.eocs-aboutm-body strong { color: #ffffff; }
+
+.eocs-aboutm-body h4 {
+    margin: 14px 0 8px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #6EA8FF;
+}
+
+.eocs-aboutm-features {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: feat;
+}
+
+.eocs-aboutm-features li {
+    counter-increment: feat;
+    position: relative;
+    padding: 8px 10px 8px 38px;
+    margin-bottom: 6px;
+    background: #14233F;
+    border: 1px solid #25365A;
+    border-radius: 10px;
+}
+
+.eocs-aboutm-features li::before {
+    content: counter(feat);
+    position: absolute;
+    left: 10px;
+    top: 9px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: rgba(59, 111, 216, 0.25);
+    border: 1px solid rgba(110, 168, 255, 0.45);
+    color: #8DBBFF;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.eocs-aboutm-features li strong { display: block; font-size: 13px; margin-bottom: 1px; }
+.eocs-aboutm-features li span { display: block; font-size: 12px; color: #9FB0CC; }
+
+.eocs-aboutm-info {
+    padding: 2px 12px;
+    background: #14233F;
+    border: 1px solid #25365A;
+    border-radius: 10px;
+}
+
+.eocs-aboutm-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 8px 0;
+    font-size: 12px;
+}
+.eocs-aboutm-row + .eocs-aboutm-row { border-top: 1px solid #25365A; }
+.eocs-aboutm-row span { color: #9FB0CC; white-space: nowrap; }
+.eocs-aboutm-row strong { text-align: right; font-weight: 600; }
+
+.eocs-aboutm-foot {
+    margin-top: 14px;
+    padding-top: 10px;
+    border-top: 1px solid #25365A;
+    text-align: center;
+    font-size: 11.5px;
+    color: #7f92b5;
+}
+
+/* compact sizes inside the dropdown (change these to resize) */
+.eocs-about-menu .eocs-aboutm-head { padding: 10px 12px; }
+.eocs-about-menu .eocs-aboutm-logo { width: 34px; height: 34px; }
+.eocs-about-menu .eocs-aboutm-title { font-size: 15px; }
+.eocs-about-menu .eocs-aboutm-sub { font-size: 11px; }
+.eocs-about-menu .eocs-aboutm-body { padding: 10px 12px 12px; font-size: 12px; }
+
+@media (max-width: 480px) {
+    .eocs-about-menu {
+        position: fixed;
+        top: calc(var(--navbar-h) + 6px);
+        left: 10px;
+        right: 10px;
+        width: auto;
+    }
+
+    .eocs-aboutm-row { flex-direction: column; gap: 2px; }
+    .eocs-aboutm-row strong { text-align: left; }
+}
+
+/* ============================================================
+   EYE BUTTON FIX: never moves on hover / click / focus
+   (centered with top/bottom/margin instead of a transform)
+   Keep this block LAST.
+   ============================================================ */
+.eocs-pw-wrap .eocs-eye {
+    position: absolute !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    margin: auto 0 !important;   /* centers vertically, no transform needed */
+    transform: none !important;
+}
+
+.eocs-pw-wrap .eocs-eye:hover,
+.eocs-pw-wrap .eocs-eye:active,
+.eocs-pw-wrap .eocs-eye:focus,
+.eocs-pw-wrap .eocs-eye:focus-visible {
+    top: 0 !important;
+    bottom: 0 !important;
+    margin: auto 0 !important;
+    transform: none !important;
+}
+
+.eocs-pw-wrap .eocs-eye:active {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.08);
+}

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Emergency Response System - EOC Dashboard</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&family=Roboto:wght@500;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome Icons (Required for all icons) -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Google Maps API - Fallback script -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD_yPOj_7ONDXkJhxtcQxi4vP1Ogizvwes&v=3.exp&libraries=geometry,drawing,places"></script>
+    
+    <style>
+      /* Global styles to prevent white screen */
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #000000;
+        overflow: hidden;
+      }
+      
+      #root {
+        width: 100vw;
+        height: 100vh;
+        background-color: #000000;
+      }
+      
+      /* Hide any potential white flash */
+      .gm-style img {
+        max-width: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- jQuery (required for some Bootstrap features) -->
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>

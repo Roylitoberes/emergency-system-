@@ -1,0 +1,818 @@
+/* SmsIcon.css */
+.sms-icon-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Inter', sans-serif;
+}
+
+.sms-icon-container .dropdown-toggle {
+    position: relative;
+    color: #6C7293;
+    font-size: 24px;
+    text-decoration: none;
+    cursor: pointer;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    padding: 0;
+    margin: 0;
+}
+
+.sms-icon-container .dropdown-toggle:hover {
+    background: rgba(25, 118, 210, 0.08);
+    color: #1976D2;
+    transform: translateY(-2px);
+}
+
+.sms-icon-container .dropdown-toggle .badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: #1976D2;
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 7px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.pulse-badge {
+    animation: pulse-ring 1.5s infinite;
+}
+
+@keyframes pulse-ring {
+    0% {
+        box-shadow: 0 0 0 0 rgba(25, 118, 210, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 5px rgba(25, 118, 210, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(25, 118, 210, 0);
+    }
+}
+
+.dropdown-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 998;
+}
+
+.sms-dropdown {
+    position: absolute;
+    top: 52px;
+    right: 0;
+    width: 450px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    z-index: 999;
+    overflow: hidden;
+    animation: slideDown 0.2s ease;
+    font-family: 'Inter', sans-serif;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.dropdown-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid #e9ecef;
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+}
+
+.dropdown-header h6 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #000000;
+}
+
+.dropdown-header h6 i {
+    color: #1976D2;
+}
+
+.mark-all-read {
+    background: none;
+    border: none;
+    color: #1976D2;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.3s;
+    padding: 4px 8px;
+    border-radius: 6px;
+}
+
+.mark-all-read:hover {
+    background: rgba(25, 118, 210, 0.1);
+    text-decoration: none;
+}
+
+/* ============================================
+   ✅ NEW: DELETE ALL BUTTON
+   ============================================ */
+.sms-delete-all {
+    background: none;
+    border: none;
+    color: #dc3545;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.3s;
+    padding: 4px 8px;
+    border-radius: 6px;
+}
+
+.sms-delete-all:hover {
+    background: rgba(220, 53, 69, 0.1);
+}
+
+/* ============================================
+   ✅ NEW: DELETE ALL CONFIRMATION POPUP
+   ============================================ */
+.sms-confirm-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 20;
+    animation: fadeIn 0.2s ease;
+}
+
+.sms-confirm-box {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 22px 24px;
+    width: 80%;
+    max-width: 300px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+
+.sms-confirm-box .sms-confirm-icon {
+    font-size: 28px;
+    color: #dc3545;
+    margin-bottom: 10px;
+}
+
+.sms-confirm-box h6 {
+    margin: 0 0 6px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #000000;
+}
+
+.sms-confirm-box p {
+    margin: 0 0 16px;
+    font-size: 12px;
+    color: #6C7293;
+}
+
+.sms-confirm-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+.sms-confirm-actions button {
+    flex: 1;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.sms-confirm-cancel {
+    background: #e9ecef;
+    color: #333333;
+}
+
+.sms-confirm-cancel:hover {
+    background: #dee2e6;
+}
+
+.sms-confirm-delete {
+    background: #dc3545;
+    color: #ffffff;
+}
+
+.sms-confirm-delete:hover {
+    background: #bb2d3b;
+}
+
+.sms-list {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.sms-item {
+    display: flex;
+    align-items: flex-start;
+    padding: 15px 20px;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+}
+
+.sms-item:hover {
+    background: #f8f9fa;
+    transform: translateX(-2px);
+}
+
+.sms-item.unread {
+    background: linear-gradient(90deg, #e3f2fd 0%, #ffffff 100%);
+}
+
+.sms-item.sms-high {
+    border-left: 4px solid #dc3545;
+}
+
+.sms-item.sms-normal {
+    border-left: 4px solid #ffc107;
+}
+
+.sms-item.sms-low {
+    border-left: 4px solid #28a745;
+}
+
+.sms-item.sms-info {
+    border-left: 4px solid #17a2b8;
+}
+
+.sms-icon-wrapper {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+    flex-shrink: 0;
+    transition: transform 0.2s;
+}
+
+.sms-item:hover .sms-icon-wrapper {
+    transform: scale(1.05);
+}
+
+.sms-icon-wrapper i {
+    font-size: 18px;
+}
+
+.sms-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.sms-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 5px;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.sms-sender {
+    font-size: 14px;
+    color: #000000;
+    flex: 1;
+}
+
+.sms-sender strong {
+    color: #1F2937;
+}
+
+.sms-actions {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+    position: relative;
+}
+
+.priority-badge {
+    font-size: 9px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+
+.priority-badge.high {
+    background: #dc3545;
+    color: white;
+}
+
+.priority-badge.normal {
+    background: #ffc107;
+    color: #856404;
+}
+
+.priority-badge.low {
+    background: #28a745;
+    color: white;
+}
+
+.sms-message {
+    margin: 4px 0 8px 0;
+    font-size: 13px;
+    color: #6C7293;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    line-clamp: 3;
+    overflow: hidden;
+}
+
+.sms-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 6px 0 8px 0;
+}
+
+.sms-tags .tag {
+    font-size: 10px;
+    padding: 3px 10px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 500;
+}
+
+.sms-tags .incident-tag {
+    background: #e3f2fd;
+    color: #0d47a1;
+}
+
+.sms-tags .location-tag {
+    background: #f3e5f5;
+    color: #4a148c;
+}
+
+.sms-tags .phone-tag {
+    background: #e8f5e9;
+    color: #1b5e20;
+}
+
+.sms-tags .tag i {
+    font-size: 10px;
+}
+
+.sms-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 4px;
+}
+
+.sms-time {
+    font-size: 10px;
+    color: #adb5bd;
+}
+
+.sms-time i {
+    margin-right: 3px;
+    font-size: 9px;
+}
+
+.unread-badge {
+    background: #dc3545;
+    color: white;
+    font-size: 9px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 500;
+    animation: fadeIn 0.3s ease;
+}
+
+.read-badge {
+    background: #28a745;
+    color: white;
+    font-size: 9px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 500;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.sms-click-hint {
+    font-size: 10px;
+    color: #1976D2;
+    margin-top: 6px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    opacity: 0.5;
+    transition: opacity 0.2s;
+}
+
+.sms-item:hover .sms-click-hint {
+    opacity: 1;
+}
+
+.sms-click-hint i {
+    font-size: 10px;
+    animation: arrowPulse 2s ease-in-out infinite;
+}
+
+@keyframes arrowPulse {
+    0%, 100% {
+        transform: translateX(0);
+    }
+    50% {
+        transform: translateX(3px);
+    }
+}
+
+.three-dot-btn {
+    background: none;
+    border: none;
+    color: #6C7293;
+    cursor: pointer;
+    padding: 4px 8px;
+    font-size: 16px;
+    border-radius: 4px;
+    transition: all 0.2s;
+    opacity: 0.5;
+}
+
+.three-dot-btn:hover {
+    background: #e9ecef;
+    opacity: 1;
+}
+
+.three-dot-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    min-width: 160px;
+    z-index: 1000;
+    padding: 4px 0;
+    animation: slideDown 0.15s ease;
+    border: 1px solid #e9ecef;
+}
+
+.three-dot-dropdown .dropdown-item {
+    padding: 8px 16px;
+    font-size: 13px;
+    color: #1F2937;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: background 0.2s;
+    text-decoration: none;
+}
+
+.three-dot-dropdown .dropdown-item:hover {
+    background: #f3f4f6;
+}
+
+.three-dot-dropdown .dropdown-item i {
+    width: 16px;
+    font-size: 14px;
+    color: #6C7293;
+}
+
+.three-dot-dropdown .dropdown-item:active {
+    background: #e5e7eb;
+}
+
+/* Unread indicators */
+.unread-indicator {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.unread-dot {
+    width: 10px;
+    height: 10px;
+    background: #1976D2;
+    border-radius: 50%;
+    z-index: 2;
+    animation: pulse-dot 1.5s ease-in-out infinite;
+}
+
+.unread-pulse {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    background: rgba(25, 118, 210, 0.3);
+    border-radius: 50%;
+    animation: pulse-ring-large 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.3);
+    }
+}
+
+@keyframes pulse-ring-large {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 0.8;
+    }
+    50% {
+        transform: scale(1.8);
+        opacity: 0;
+    }
+}
+
+.read-indicator {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.read-indicator i {
+    font-size: 14px;
+    color: #28a745;
+}
+
+.dropdown-footer {
+    padding: 12px 20px;
+    text-align: center;
+    border-top: 1px solid #e9ecef;
+    background: #f8f9fa;
+}
+
+.view-all {
+    color: #1976D2;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.view-all:hover {
+    text-decoration: none;
+    transform: translateX(3px);
+}
+
+.no-messages {
+    text-align: center;
+    padding: 60px 20px;
+    color: #6C7293;
+}
+
+.no-messages i {
+    font-size: 48px;
+    margin-bottom: 15px;
+    color: #dee2e6;
+}
+
+.no-messages p {
+    margin: 0;
+    font-size: 14px;
+}
+
+/* Custom scrollbar */
+.sms-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sms-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.sms-list::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.sms-list::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .sms-icon-container .dropdown-toggle {
+        font-size: 20px;
+        width: 42px;
+        height: 42px;
+    }
+
+    .sms-icon-container .dropdown-toggle .badge {
+        font-size: 10px;
+        min-width: 20px;
+        height: 20px;
+        top: -3px;
+        right: -3px;
+        padding: 0 6px;
+    }
+
+    .sms-dropdown {
+        width: calc(100vw - 40px);
+        right: -100px;
+        max-width: 400px;
+        top: 46px;
+    }
+    
+    .sms-item {
+        padding: 12px 15px;
+    }
+    
+    .sms-icon-wrapper {
+        width: 35px;
+        height: 35px;
+    }
+    
+    .sms-icon-wrapper i {
+        font-size: 16px;
+    }
+    
+    .sms-sender {
+        font-size: 13px;
+    }
+    
+    .sms-message {
+        font-size: 12px;
+    }
+
+    .sms-tags .tag {
+        font-size: 9px;
+        padding: 2px 8px;
+    }
+
+    .three-dot-dropdown {
+        right: -10px;
+        min-width: 140px;
+    }
+    
+    .three-dot-dropdown .dropdown-item {
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+    
+    .unread-dot {
+        width: 8px;
+        height: 8px;
+    }
+    
+    .unread-pulse {
+        width: 12px;
+        height: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .sms-icon-container .dropdown-toggle {
+        font-size: 18px;
+        width: 38px;
+        height: 38px;
+    }
+
+    .sms-icon-container .dropdown-toggle .badge {
+        font-size: 9px;
+        min-width: 18px;
+        height: 18px;
+        top: -4px;
+        right: -4px;
+        padding: 0 5px;
+    }
+
+    .sms-dropdown {
+        width: calc(100vw - 20px);
+        right: -60px;
+        max-width: 350px;
+        top: 42px;
+    }
+
+    .sms-item {
+        padding: 10px 12px;
+    }
+
+    .sms-icon-wrapper {
+        width: 30px;
+        height: 30px;
+        min-width: 30px;
+        margin-right: 8px;
+    }
+
+    .sms-icon-wrapper i {
+        font-size: 14px;
+    }
+
+    .sms-sender {
+        font-size: 12px;
+    }
+
+    .sms-message {
+        font-size: 11px;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+    }
+
+    .dropdown-header h6 {
+        font-size: 14px;
+    }
+
+    .mark-all-read {
+        font-size: 10px;
+    }
+
+    .sms-delete-all {
+        font-size: 10px;
+    }
+
+    .sms-tags .tag {
+        font-size: 8px;
+        padding: 2px 6px;
+    }
+
+    .sms-click-hint {
+        font-size: 8px;
+    }
+
+    .three-dot-dropdown {
+        right: -5px;
+        min-width: 120px;
+    }
+    
+    .three-dot-dropdown .dropdown-item {
+        padding: 5px 10px;
+        font-size: 11px;
+    }
+    
+    .read-indicator i {
+        font-size: 12px;
+    }
+}
+
+.sms-time {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: #64748B;
+    flex-wrap: wrap;
+}
+
+.sms-time .fa-clock-o {
+    color: #94A3B8;
+    margin-right: 2px;
+}
