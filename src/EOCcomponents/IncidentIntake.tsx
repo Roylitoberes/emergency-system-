@@ -637,6 +637,9 @@ const IncidentIntake: React.FC<IncidentIntakeProps> = ({ onNavigateToDispatch })
 
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
 
+  // ✅ NEW: warning modal when there are undispatched reports in Dispatch Responders
+  const [showPendingDispatchModal, setShowPendingDispatchModal] = useState(false);
+
   const processedNotifications = useRef<Set<string>>(new Set());
   const pendingNotifications = useRef<Set<string>>(new Set());
   const processedSmsIds = useRef<Set<string>>(new Set());
@@ -1344,6 +1347,30 @@ const IncidentIntake: React.FC<IncidentIntakeProps> = ({ onNavigateToDispatch })
 
     if (selectedQueueItem.status !== 'verified') {
       alert('⚠️ Please verify the incident first before forwarding to dispatch.');
+      return;
+    }
+
+    // ✅ NEW RESTRICTION: block forwarding while any report in Dispatch Responders
+    // has not yet been dispatched (its button is not "Dispatched ✓" yet).
+    try {
+      const DONE_STATUSES = ['dispatched', 'en route', 'arrived', 'resolved'];
+      const forwardedSnap = await getDocs(collection(firestore, 'forwarded_incidents'));
+
+      const hasPendingReports = forwardedSnap.docs.some((d) => {
+        const data: any = d.data();
+        const forwardedId = String(data.id || d.id);
+        if (forwardedId === selectedQueueItem.incidentId) return false; // same report
+        const status = String(data.status || '').toLowerCase().trim();
+        return !DONE_STATUSES.includes(status);
+      });
+
+      if (hasPendingReports) {
+        setShowPendingDispatchModal(true);
+        return;
+      }
+    } catch (checkError) {
+      console.error('❌ Could not verify pending dispatch reports:', checkError);
+      alert('⚠️ Unable to check Dispatch Responders right now. Please try again.');
       return;
     }
 
@@ -2368,6 +2395,67 @@ const IncidentIntake: React.FC<IncidentIntakeProps> = ({ onNavigateToDispatch })
             <div className="photo-modal-info">
               <i className="fa fa-image"></i> Click anywhere outside to close
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ✅ NEW: Pending dispatch warning modal */}
+      {showPendingDispatchModal && (
+        <div
+          onClick={() => setShowPendingDispatchModal(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.6)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10000,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: '#0F1B38',
+              color: '#FFFFFF',
+              border: '1px solid #F59E0B',
+              borderRadius: '12px',
+              padding: '24px',
+              maxWidth: '420px',
+              width: '90%',
+              textAlign: 'center',
+              boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+            }}
+          >
+            <div style={{ fontSize: '40px', marginBottom: '8px' }}>⚠️</div>
+            <h4 style={{ margin: '0 0 8px 0', color: '#F59E0B' }}>Warning</h4>
+            <p style={{ margin: '0 0 20px 0', fontSize: '0.9rem', lineHeight: 1.5 }}>
+              You have active reports in Dispatch Responders that have not yet been dispatched.
+              Please dispatch all active reports before forwarding this report to Dispatch.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setShowPendingDispatchModal(false);
+                // ✅ Go straight to the Dispatch Responders page
+                if (onNavigateToDispatch) {
+                  onNavigateToDispatch();
+                } else {
+                  window.location.href = '/dispatch-responder';
+                }
+              }}
+              style={{
+                background: '#2563EB',
+                color: '#FFFFFF',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '8px 24px',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              OK
+            </button>
           </div>
         </div>
       )}
