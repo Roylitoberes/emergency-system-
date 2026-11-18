@@ -6,6 +6,8 @@
 // ✅ NEW: "Delete all" button with confirmation popup
 // ✅ NEW: Per-card delete button with confirmation
 // ✅ NEW: Date & time = real-time Philippine time at the moment the alert is received
+// ✅ FIXED: Received time now comes from the FIRESTORE SERVER clock (serverTimestamp),
+//           so a wrong PC / phone / web-server date can no longer produce a wrong date.
 // ✅ NEW: Active-report guard (same as SmsIcon) — blocks opening another LoRa alert while
 //         the current LoRa report has not been forwarded to Dispatch (warning modal → OK)
 
@@ -22,7 +24,9 @@ import {
   deleteDoc,
   limit,
   getDocs,
+  getDoc, // ✅ FIXED: read back the server time
   addDoc,
+  serverTimestamp, // ✅ FIXED: exact server time
   where // ✅ NEW
 } from "firebase/firestore";
 
@@ -225,15 +229,57 @@ const getActiveUnforwardedLoraReport = async (): Promise<ActiveLoraReport | null
 };
 
 // ===============================
+// ✅ FIXED: TRUSTED CLOCK
+// The PC / phone / web-server clock can be wrong. We keep an offset so that
+// getNow() returns the REAL time. The offset comes from:
+//   1) an online time service (timeapi.io) at startup, and
+//   2) the Firestore server time, every time an alert is saved (most reliable).
+// ===============================
+let serverClockOffset = 0; // ms to ADD to Date.now() to get the real time
+let lastClockSync = 0;
+
+const syncClock = async (): Promise<void> => {
+  try {
+    const t0 = Date.now();
+    const res = await fetch(
+      'https://timeapi.io/api/time/current/zone?timeZone=Asia%2FManila',
+      { cache: 'no-store' }
+    );
+    const t1 = Date.now();
+    if (!res.ok) return;
+
+    const json = await res.json();
+    // dateTime is Philippine local time, e.g. "2026-11-17T01:47:11.1234567"
+    const raw: string | undefined = json?.dateTime;
+    if (!raw) return;
+
+    const realMs = new Date(raw.slice(0, 19) + '+08:00').getTime();
+    if (isNaN(realMs)) return;
+
+    // Compensate for half of the network round-trip
+    const mid = (t0 + t1) / 2;
+    serverClockOffset = realMs - mid;
+    lastClockSync = t1;
+    console.log(`🕒 Clock synced. Device clock is off by ${Math.round(serverClockOffset / 1000)}s`);
+  } catch (error) {
+    console.log('🕒 Clock sync failed (will use Firestore time on save):', error);
+  }
+};
+
+// Real current time (device clock corrected by the offset)
+const getNow = (): Date => new Date(Date.now() + serverClockOffset);
+
+// ===============================
 // 🇵🇭 PHILIPPINE TIME HELPERS
 // ===============================
 
 /**
  * Returns the current time formatted as a Philippine-time string.
  * Output: "YYYY-MM-DD HH:mm:ss"
+ * ✅ FIXED: uses getNow() (corrected clock) instead of new Date()
  */
 const getPhilippineNow = (): string => {
-  const now = new Date();
+  const now = getNow();
 
   const parts = new Intl.DateTimeFormat('en-CA', {
     timeZone: 'Asia/Manila',
@@ -320,6 +366,15 @@ const LoraAlert: React.FC<LoraAlertProps> = ({ onNavigateToLoraDevice }) => {
   const [showActiveReportWarning, setShowActiveReportWarning] = useState(false);
 
   const processedAlertIds = useRef<Set<string>>(new Set());
+
+  // =================================
+  // ✅ FIXED: keep the clock synced
+  // =================================
+  useEffect(() => {
+    syncClock();
+    const interval = setInterval(syncClock, 10 * 60 * 1000); // every 10 minutes
+    return () => clearInterval(interval);
+  }, []);
 
   // =================================
   // ✅ AUDIO UNLOCK: browsers block audio until user interacts.
@@ -429,12 +484,14 @@ const LoraAlert: React.FC<LoraAlertProps> = ({ onNavigateToLoraDevice }) => {
   // ✅ CONVERT INCIDENT TO ALERT
   // ✅ CHANGED: always use the REAL-TIME Philippine date & time at the
   //    moment the dashboard receives the alert (not the sender's timestamp).
+  // ✅ FIXED: this is only a provisional time shown instantly; it is replaced by
+  //    the exact Firestore server time as soon as the alert is saved.
   // =================================
 
   const convertIncidentToAlert = (incident: any): Alert => {
     const alertId = String(incident.id) || `alert-${Date.now()}`;
 
-    // ✅ Real-time moment the alert is received (Philippine time)
+    // ✅ Provisional received time (Philippine time, corrected clock)
     const timestamp = getPhilippineNow();
 
     return {
@@ -571,8 +628,10 @@ const LoraAlert: React.FC<LoraAlertProps> = ({ onNavigateToLoraDevice }) => {
 
   // =================================
   // ✅ SAVE ALERT TO FIREBASE
-  // ✅ CHANGED: saves the same received time shown on the card, so it is
-  //    identical after a refresh.
+  // ✅ FIXED: the received time is now written by the FIRESTORE SERVER
+  //    (receivedAt: serverTimestamp()). After the save we read that exact time
+  //    back, show it on the card, and store it as timestamp / philippineTime,
+  //    so it is identical after a refresh.
   // =================================
 
   const saveAlertToFirebase = async (alert: Alert) => {
@@ -580,6 +639,7 @@ const LoraAlert: React.FC<LoraAlertProps> = ({ onNavigateToLoraDevice }) => {
       console.log(`💾 Saving alert to Firebase: ${alert.id}`);
       const alertsRef = collection(firestore, "lora_alerts");
 
+      const t0 = Date.now();
       const docRef = await addDoc(alertsRef, {
         deviceId: alert.deviceId,
         message: alert.message,
@@ -594,19 +654,55 @@ const LoraAlert: React.FC<LoraAlertProps> = ({ onNavigateToLoraDevice }) => {
         timestamp: alert.timestamp,
         read: false,
         source: "LoRa",
-        createdAt: new Date().toISOString(),
+        createdAt: getNow().toISOString(),
         philippineTime: alert.timestamp,
+        receivedAt: serverTimestamp(), // ✅ FIXED: exact server time
       });
+      const t1 = Date.now();
 
       console.log(`✅ Alert saved to Firebase with ID: ${docRef.id}`);
 
-      const updatedAlert = { ...alert, firebaseId: docRef.id };
+      let updatedAlert: Alert = { ...alert, firebaseId: docRef.id };
 
+      // Show the firebaseId right away (so delete / mark-as-read work)
       setAlerts((prev) =>
         prev.map((a) =>
           a.id === alert.id ? updatedAlert : a
         )
       );
+
+      // ✅ FIXED: read back the exact server time and use it everywhere
+      try {
+        const snap = await getDoc(docRef);
+        const receivedAt: any = snap.data()?.receivedAt;
+
+        if (receivedAt && typeof receivedAt.toDate === 'function') {
+          const serverDate: Date = receivedAt.toDate();
+          const exactStamp = toPhilippineStamp(serverDate);
+
+          // Re-sync the clock from the Firestore server time
+          serverClockOffset = serverDate.getTime() - (t0 + t1) / 2;
+          lastClockSync = Date.now();
+
+          // Save the exact time so it is the same after a refresh
+          updateDoc(docRef, {
+            timestamp: exactStamp,
+            philippineTime: exactStamp,
+          }).catch((e) =>
+            console.warn('Could not store exact server time:', e?.message || e)
+          );
+
+          updatedAlert = { ...updatedAlert, timestamp: exactStamp };
+          setAlerts((prev) =>
+            prev.map((a) =>
+              a.id === alert.id ? updatedAlert : a
+            )
+          );
+          console.log(`🕒 Exact received time (server): ${exactStamp}`);
+        }
+      } catch (timeError) {
+        console.warn('Could not read exact server time:', timeError);
+      }
 
       return updatedAlert;
     } catch (error) {
@@ -659,11 +755,13 @@ const LoraAlert: React.FC<LoraAlertProps> = ({ onNavigateToLoraDevice }) => {
         }
 
         let timestamp = "Waiting...";
-        if (data.philippineTime) {
-          // ✅ Saved at the moment the dashboard received the alert
+        if (data.receivedAt && typeof data.receivedAt.toDate === 'function') {
+          // ✅ FIXED: exact Firestore SERVER time of when the alert was received
+          timestamp = toPhilippineStamp(data.receivedAt.toDate());
+        } else if (data.philippineTime) {
+          // Older alerts (saved before this fix)
           timestamp = data.philippineTime;
         } else if (data.createdAt) {
-          // ✅ createdAt = when the alert was actually received/written
           const created =
             typeof data.createdAt === 'string'
               ? new Date(data.createdAt)
