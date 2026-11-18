@@ -10,6 +10,7 @@
 //           so a wrong PC / phone / web-server date can no longer produce a wrong date.
 // ✅ NEW: Active-report guard (same as SmsIcon) — blocks opening another LoRa alert while
 //         the current LoRa report has not been forwarded to Dispatch (warning modal → OK)
+// ✅ FIXED (build): removed unused `lastClockSync` variable (TS6133 / noUnusedLocals)
 
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { createPortal } from "react-dom"; // ✅ NEW
@@ -236,7 +237,6 @@ const getActiveUnforwardedLoraReport = async (): Promise<ActiveLoraReport | null
 //   2) the Firestore server time, every time an alert is saved (most reliable).
 // ===============================
 let serverClockOffset = 0; // ms to ADD to Date.now() to get the real time
-let lastClockSync = 0;
 
 const syncClock = async (): Promise<void> => {
   try {
@@ -259,7 +259,6 @@ const syncClock = async (): Promise<void> => {
     // Compensate for half of the network round-trip
     const mid = (t0 + t1) / 2;
     serverClockOffset = realMs - mid;
-    lastClockSync = t1;
     console.log(`🕒 Clock synced. Device clock is off by ${Math.round(serverClockOffset / 1000)}s`);
   } catch (error) {
     console.log('🕒 Clock sync failed (will use Firestore time on save):', error);
@@ -682,7 +681,6 @@ const LoraAlert: React.FC<LoraAlertProps> = ({ onNavigateToLoraDevice }) => {
 
           // Re-sync the clock from the Firestore server time
           serverClockOffset = serverDate.getTime() - (t0 + t1) / 2;
-          lastClockSync = Date.now();
 
           // Save the exact time so it is the same after a refresh
           updateDoc(docRef, {
