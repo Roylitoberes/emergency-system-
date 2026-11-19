@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { getAuth, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
+import { getAuth, createUserWithEmailAndPassword, sendPasswordResetEmail, signOut } from 'firebase/auth';
+import { getApp, getApps, initializeApp } from 'firebase/app';
 import {
   getFirestore, doc, setDoc, updateDoc, deleteDoc, getDoc, collection, getDocs,
   query, orderBy, where, onSnapshot, Timestamp,
@@ -22,6 +23,15 @@ const PASSWORD_RULES = [
 const FIELD_LABELS: Record<string, string> = {
   name: 'Full Name', gender: 'Gender', age: 'Age', civilStatus: 'Status',
   phone: 'Mobile Number', role: 'Role / Position', team: 'Team', capabilities: 'Capabilities',
+};
+
+// Separate Firebase app used ONLY to create accounts, so the admin stays logged in
+// (creating a user on the main auth instance would sign in as that new user and
+// change the admin's name / email shown in Settings).
+const getCreatorAuth = () => {
+  const existing = getApps().find((a) => a.name === 'account-creator');
+  const app = existing || initializeApp(getApp().options, 'account-creator');
+  return getAuth(app);
 };
 
 interface User {
@@ -462,9 +472,13 @@ const ManageUsers: React.FC<ManageUsersProps> = ({ onEOCCreating, onUsersLoaded 
     if (!formData.email.trim()) return alert("❌ Please enter the user's real email address.");
     setIsCreating(true); if (onEOCCreating) onEOCCreating(true);
     try {
-      const auth = getAuth(); const db = getFirestore();
+      const db = getFirestore();
       const email = formData.email.trim();
-      const cred = await createUserWithEmailAndPassword(auth, email, formData.password);
+
+      // Create the account on a SECONDARY Firebase app so the admin session
+      // (name + email shown in Settings) is never replaced by the new user.
+      const creatorAuth = getCreatorAuth();
+      const cred = await createUserWithEmailAndPassword(creatorAuth, email, formData.password);
       const firebaseUser = cred.user;
       let profileUrl = formData.profile || 'https://i.imgur.com/HeIi0wU.png';
       if (selectedFile) { const uploaded = await uploadProfileImage(selectedFile, firebaseUser.uid); if (uploaded) profileUrl = uploaded; }
@@ -489,7 +503,12 @@ const ManageUsers: React.FC<ManageUsersProps> = ({ onEOCCreating, onUsersLoaded 
           specialization: '', type: 'responder', userType: 'responder',
         };
       }
+      // Written with the ADMIN's session (main auth), not the new user's
       await setDoc(doc(db, 'manage_users', firebaseUser.uid), userData);
+
+      // Close the temporary session of the new account (admin stays logged in)
+      await signOut(creatorAuth);
+
       await logActivity({ icon: 'user-check', tone: 'forest', title: selectedUserType === 'eoc' ? 'New EOC account created' : 'New responder account created', meta: `${userData.name} (${formData.role}) assigned to ${userData.department || 'Naga City'}` });
       const newUser: User = {
         id: firebaseUser.uid, name: userData.name, role: formData.role, email, phone: formData.phone,
