@@ -855,21 +855,6 @@ const FinalReports: React.FC<FinalReportsProps> = () => {
     });
   }, [mappedIncidents, searchTerm, statusFilter, singleDate]);
 
-  const metrics = useMemo(
-    () => ({
-      total: mappedIncidents.length,
-      pending: mappedIncidents.filter(
-        (i) => i.status === 'pending' || i.status === 'review'
-      ).length,
-      incomplete: mappedIncidents.filter((i) => i.status === 'incomplete')
-        .length,
-      ready: mappedIncidents.filter((i) => i.status === 'ready').length,
-      completed: mappedIncidents.filter((i) => i.status === 'completed')
-        .length,
-    }),
-    [mappedIncidents]
-  );
-
   const handleSelectIncident = (id: string) => {
     setSelectedId(id);
     setView('detail');
@@ -944,30 +929,6 @@ const FinalReports: React.FC<FinalReportsProps> = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-        </div>
-
-        {/* Metrics strip */}
-        <div className="fr-metrics">
-          {[
-            { label: 'Total cases', value: metrics.total, icon: '📋', color: '#0F1F4A', bg: '#E3E9F7' },
-            { label: 'Pending review', value: metrics.pending, icon: '⏳', color: '#B7862A', bg: '#F8EFD9' },
-            { label: 'Incomplete', value: metrics.incomplete, icon: '⚠️', color: '#C2412F', bg: '#FBE4E0' },
-            { label: 'Ready to generate', value: metrics.ready, icon: '📄', color: '#3B6DF0', bg: '#E1E9FD' },
-            { label: 'Completed', value: metrics.completed, icon: '✅', color: '#0F1F4A', bg: '#E3E9F7' },
-          ].map((m, idx) => (
-            <div key={idx} className="fr-metric">
-              <div
-                className="fr-metric-icon"
-                style={{ background: m.bg, color: m.color }}
-              >
-                {m.icon}
-              </div>
-              <div>
-                <div className="fr-metric-num">{m.value}</div>
-                <div className="fr-metric-label">{m.label}</div>
-              </div>
-            </div>
-          ))}
         </div>
 
         {/* Full-width table */}
