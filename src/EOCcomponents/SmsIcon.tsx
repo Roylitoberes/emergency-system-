@@ -7,17 +7,15 @@
 // + ✅ NEW: Card menu only has Delete (Mark as Read/Unread removed)
 // + ✅ NEW: New SMS stay UNREAD until clicked; clicking a message marks it READ
 // + ✅ NEW: Real-time received date & time (stable, never changes after arrival)
-// + ✅ NEW: Active-report guard — blocks opening another SMS while the report in
-//          Incident Intake has not been forwarded to Dispatch (warning modal → OK goes to Incident Intake)
+// + ✅ REMOVED: Active-report guard (queueing) — any SMS can now be opened even if
+//          the current report in Incident Intake has not been forwarded to Dispatch
 import React, { useState, useEffect, useRef } from 'react';
-import { createPortal } from 'react-dom'; // ✅ NEW
 import {
   collection,
   query,
   orderBy,
   onSnapshot,
   doc,
-  getDoc, // ✅ NEW
   updateDoc,
   deleteDoc,
 } from 'firebase/firestore';
@@ -129,30 +127,6 @@ const deleteSmsDoc = (id: string) => {
   });
 };
 
-// ============================================================
-// ✅ NEW HELPER: Is there an opened report in Incident Intake that has
-// NOT been forwarded to Dispatch yet? Returns its incidentId, or null.
-// (Same rule as NotificationBox.)
-// ============================================================
-const getActiveUnforwardedIncidentId = async (): Promise<string | null> => {
-  try {
-    const selectedId = localStorage.getItem('selectedIncidentId');
-    if (!selectedId) return null;
-
-    const snap = await getDoc(doc(firestore, 'incident_queue', selectedId));
-    if (!snap.exists()) return null;
-
-    const data: any = snap.data();
-    if (data.isDeleted === true) return null;
-    if (data.status !== 'verified') return null; // dispatched/resolved/duplicate/review → not blocking
-
-    return String(data.incidentId || snap.id);
-  } catch (error) {
-    console.error('Error checking active incident:', error);
-    return null; // on error, never lock the EOC out
-  }
-};
-
 const SmsIcon: React.FC<SmsIconProps> = ({
   onClick,
   className = '',
@@ -166,8 +140,6 @@ const SmsIcon: React.FC<SmsIconProps> = ({
   const [refreshKey, setRefreshKey] = useState(0);
   // ✅ NEW: controls the "Are you sure you want to delete all?" popup
   const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false);
-  // ✅ NEW: warning shown when an active report hasn't been forwarded yet
-  const [showActiveReportWarning, setShowActiveReportWarning] = useState(false);
 
   const dropdownRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const smsRef = useRef<HTMLDivElement>(null);
@@ -451,6 +423,7 @@ const SmsIcon: React.FC<SmsIconProps> = ({
     }
   };
 
+  // (no active-report guard anymore — any SMS can be opened at any time)
   const handleMessageClick = (message: SmsMessage) => {
     // ✅ STOP THE ALARM SOUND IMMEDIATELY
     stopNotificationSound();
@@ -522,38 +495,6 @@ const SmsIcon: React.FC<SmsIconProps> = ({
 
     // 2) Slow network work in the background
     verifySmsInBackground(message);
-  };
-
-  // ============================================================
-  // ✅ NEW: guard that runs BEFORE the existing handleMessageClick.
-  // Blocks opening a DIFFERENT report while the current one in Incident
-  // Intake is verified but not yet forwarded to Dispatch.
-  // ============================================================
-  const handleMessageItemClick = async (message: SmsMessage) => {
-    // Stop the alarm sound the INSTANT the message is clicked
-    // (before the Firestore check below, which takes a moment)
-    stopNotificationSound();
-
-    const activeId = await getActiveUnforwardedIncidentId();
-
-    // Block only when a DIFFERENT report is still waiting to be forwarded
-    if (activeId && activeId !== message.id) {
-      stopNotificationSound();
-      setIsOpen(false);
-      setShowActiveReportWarning(true);
-      return;
-    }
-
-    handleMessageClick(message);
-  };
-
-  // ✅ NEW: OK on the warning → go straight to Incident Intake
-  const handleActiveWarningOk = () => {
-    setShowActiveReportWarning(false);
-    setIsOpen(false);
-    if (onNavigateToIncidentIntake) {
-      onNavigateToIncidentIntake();
-    }
   };
 
   const toggleThreeDotMenu = (messageId: string, event: React.MouseEvent) => {
@@ -756,7 +697,7 @@ const SmsIcon: React.FC<SmsIconProps> = ({
                       className={`sms-item ${
                         !message.read ? 'unread' : ''
                       } ${getPriorityClass(message.priority)}`}
-                      onClick={() => handleMessageItemClick(message)}
+                      onClick={() => handleMessageClick(message)}
                     >
                       {!message.read && (
                         <div className="unread-indicator">
@@ -967,78 +908,6 @@ const SmsIcon: React.FC<SmsIconProps> = ({
           </>
         )}
       </div>
-
-      {/* ✅ NEW: Active-report warning modal (portal so it sits above everything) */}
-      {showActiveReportWarning &&
-        createPortal(
-          <div
-            style={{
-              position: 'fixed',
-              inset: 0,
-              background: 'rgba(0,0,0,0.55)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 100000,
-            }}
-          >
-            <div
-              role="alertdialog"
-              aria-modal="true"
-              aria-label="Active report warning"
-              style={{
-                background: '#ffffff',
-                borderRadius: 12,
-                padding: '24px 28px',
-                maxWidth: 440,
-                width: '90%',
-                textAlign: 'center',
-                boxShadow: '0 10px 40px rgba(0,0,0,0.35)',
-              }}
-            >
-              <div style={{ fontSize: 40, marginBottom: 8 }}>⚠️</div>
-              <h3
-                style={{
-                  margin: '0 0 10px',
-                  color: '#1F2937',
-                  fontSize: '1.1rem',
-                }}
-              >
-                Active Report in Progress
-              </h3>
-              <p
-                style={{
-                  margin: '0 0 20px',
-                  color: '#4B5563',
-                  fontSize: '0.95rem',
-                  lineHeight: 1.5,
-                }}
-              >
-                You have an active report in Incident Intake that has not yet
-                been forwarded to Dispatch. Please forward the current report
-                before opening a new report.
-              </p>
-              <button
-                type="button"
-                onClick={handleActiveWarningOk}
-                autoFocus
-                style={{
-                  background: '#2563EB',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 8,
-                  padding: '10px 32px',
-                  fontSize: '0.95rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}
-              >
-                OK
-              </button>
-            </div>
-          </div>,
-          document.body
-        )}
     </div>
   );
 };

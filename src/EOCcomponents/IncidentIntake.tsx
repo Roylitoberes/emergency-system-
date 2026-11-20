@@ -46,6 +46,17 @@ const logActivity = async (payload: {
 };
 
 // ============================================================
+// ✅ HELPER: Coordinate validation (prevents Leaflet crashes)
+// ============================================================
+const isValidCoord = (lat: any, lng: any): boolean =>
+  typeof lat === 'number' &&
+  typeof lng === 'number' &&
+  Number.isFinite(lat) &&
+  Number.isFinite(lng);
+
+const DEFAULT_CENTER = { lat: 14.5995, lng: 120.9842 };
+
+// ============================================================
 // ✅ HELPER: Parse coordinates from SMS text
 // Supports:
 //   - COORDS:10.258847,123.711452            (new structured)
@@ -260,6 +271,35 @@ const createPulseRing = (color: string) => {
   });
 };
 
+// ============================================================
+// ✅ ERROR BOUNDARY: a bad record only breaks the map, not the page
+// ============================================================
+class ErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { error: Error | null }
+> {
+  state = { error: null as Error | null };
+
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+
+  componentDidCatch(error: Error, info: React.ErrorInfo) {
+    console.error('ErrorBoundary caught:', error, info);
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <div style={{ padding: 24, color: '#b91c1c' }}>
+          Map error: {this.state.error.message}
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 interface IncidentMarker {
   id: number;
   lat: number;
@@ -347,7 +387,7 @@ interface GoogleMapProps {
 // ✅ Leaflet Map Component
 const GoogleMap: React.FC<GoogleMapProps> = ({
   incidents = [],
-  center = { lat: 14.5995, lng: 120.9842 },
+  center = DEFAULT_CENTER,
   zoom = 13,
   nearbyPlaces = [],
 }) => {
@@ -363,59 +403,25 @@ const GoogleMap: React.FC<GoogleMapProps> = ({
     ensurePinStyles();
   }, []);
 
-  const defaultIncidents: IncidentMarker[] = [
-    {
-      id: 1,
-      lat: 14.5995,
-      lng: 120.9842,
-      title: '🔥 Fire Incident',
-      type: 'Fire',
-      severity: 'high',
-      description: 'Structural fire at residential building - evacuation in progress',
-      time: '10:30 AM',
-    },
-    {
-      id: 2,
-      lat: 14.6012,
-      lng: 120.9825,
-      title: '🚗 Traffic Accident',
-      type: 'Accident',
-      severity: 'medium',
-      description: 'Multi-vehicle collision on main highway',
-      time: '11:15 AM',
-    },
-    {
-      id: 3,
-      lat: 14.5978,
-      lng: 120.9856,
-      title: '🏥 Medical Emergency',
-      type: 'Medical',
-      severity: 'high',
-      description: 'Mass casualty event at shopping mall',
-      time: '9:45 AM',
-    },
-  ];
-
-  const [allIncidents, setAllIncidents] = useState<IncidentMarker[]>(defaultIncidents);
-  const [mapCenter, setMapCenter] = useState(center);
+  // ✅ No more fake demo pins — only real, valid incidents are shown
+  const [allIncidents, setAllIncidents] = useState<IncidentMarker[]>([]);
+  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>(
+    isValidCoord(center?.lat, center?.lng) ? center : DEFAULT_CENTER
+  );
   const [allNearbyPlaces, setAllNearbyPlaces] = useState<NearbyPlace[]>(nearbyPlaces);
 
   useEffect(() => {
-    if (incidents.length > 0) {
-      setAllIncidents(incidents);
-      if (incidents[0].lat && incidents[0].lng) {
-        setMapCenter({ lat: incidents[0].lat, lng: incidents[0].lng });
-      }
-    } else {
-      setAllIncidents(defaultIncidents);
+    const valid = incidents.filter((i) => isValidCoord(i.lat, i.lng));
+    setAllIncidents(valid);
+    if (valid.length > 0) {
+      setMapCenter({ lat: valid[0].lat, lng: valid[0].lng });
+    } else if (isValidCoord(center?.lat, center?.lng)) {
       setMapCenter(center);
     }
   }, [incidents]);
 
   useEffect(() => {
-    if (nearbyPlaces.length > 0) {
-      setAllNearbyPlaces(nearbyPlaces);
-    }
+    setAllNearbyPlaces(nearbyPlaces.filter((p) => isValidCoord(p.lat, p.lng)));
   }, [nearbyPlaces]);
 
   const displayIncidents = allIncidents;
@@ -444,8 +450,12 @@ const GoogleMap: React.FC<GoogleMapProps> = ({
   useEffect(() => {
     if (!mapRef.current || leafletMap.current) return;
 
+    const startCenter = isValidCoord(mapCenter?.lat, mapCenter?.lng)
+      ? mapCenter
+      : DEFAULT_CENTER;
+
     leafletMap.current = L.map(mapRef.current, {
-      center: [mapCenter.lat, mapCenter.lng],
+      center: [startCenter.lat, startCenter.lng],
       zoom: zoom,
       zoomControl: true,
       fadeAnimation: true,
@@ -489,7 +499,7 @@ const GoogleMap: React.FC<GoogleMapProps> = ({
   }, []);
 
   useEffect(() => {
-    if (leafletMap.current) {
+    if (leafletMap.current && isValidCoord(mapCenter?.lat, mapCenter?.lng)) {
       leafletMap.current.setView([mapCenter.lat, mapCenter.lng], zoom);
     }
   }, [mapCenter]);
@@ -505,6 +515,9 @@ const GoogleMap: React.FC<GoogleMapProps> = ({
     nearbyMarkersRef.current = [];
 
     displayIncidents.forEach((incident) => {
+      // ✅ Safety net: never hand bad coordinates to Leaflet
+      if (!isValidCoord(incident.lat, incident.lng)) return;
+
       // ✅ Red map pin (hover grow handled by CSS)
       const marker = L.marker([incident.lat, incident.lng], {
         icon: PIN_ICON,
@@ -568,6 +581,8 @@ const GoogleMap: React.FC<GoogleMapProps> = ({
     });
 
     displayNearbyPlaces.forEach((place) => {
+      if (!isValidCoord(place.lat, place.lng)) return;
+
       const marker = L.circleMarker([place.lat, place.lng], {
         radius: 5,
         fillColor: '#6B7280',
@@ -627,7 +642,7 @@ interface IncidentIntakeProps {
 const IncidentIntake: React.FC<IncidentIntakeProps> = ({ onNavigateToDispatch }) => {
   const [selectedIncident, setSelectedIncident] = useState<any>(null);
   const [mapIncidents, setMapIncidents] = useState<IncidentMarker[]>([]);
-  const [mapCenter, setMapCenter] = useState({ lat: 14.5995, lng: 120.9842 });
+  const [mapCenter, setMapCenter] = useState({ ...DEFAULT_CENTER });
   const [nearbyPlaces, setNearbyPlaces] = useState<NearbyPlace[]>([]);
 
   const [incidentQueue, setIncidentQueue] = useState<IncidentQueueItem[]>([]);
@@ -636,9 +651,6 @@ const IncidentIntake: React.FC<IncidentIntakeProps> = ({ onNavigateToDispatch })
   const [notificationTick, setNotificationTick] = useState(0);
 
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
-
-  // ✅ NEW: warning modal when there are undispatched reports in Dispatch Responders
-  const [showPendingDispatchModal, setShowPendingDispatchModal] = useState(false);
 
   const processedNotifications = useRef<Set<string>>(new Set());
   const pendingNotifications = useRef<Set<string>>(new Set());
@@ -848,6 +860,7 @@ const IncidentIntake: React.FC<IncidentIntakeProps> = ({ onNavigateToDispatch })
       } else {
         setSelectedQueueItem(null);
         setSelectedIncident(null);
+        setMapIncidents([]);
         localStorage.removeItem('selectedIncidentId');
       }
 
@@ -949,6 +962,9 @@ const IncidentIntake: React.FC<IncidentIntakeProps> = ({ onNavigateToDispatch })
               else if (type === 'hotel' || tags.tourism === 'hotel') type = 'hotel';
               else if (type === 'gas_station' || tags.amenity === 'fuel') type = 'gas_station';
               else if (type === 'store' || tags.shop) type = 'store';
+
+              // Skip elements without valid coordinates
+              if (!isValidCoord(element.lat, element.lon)) return;
 
               places.push({
                 name: name,
@@ -1268,17 +1284,23 @@ const IncidentIntake: React.FC<IncidentIntakeProps> = ({ onNavigateToDispatch })
       },
     });
 
-    setMapIncidents([{
-      id: 1,
-      lat: item.lat,
-      lng: item.lng,
-      title: `${item.type} Incident`,
-      type: item.type,
-      severity: item.priority,
-      description: item.description,
-      time: item.reportedAt,
-    }]);
-    setMapCenter({ lat: item.lat, lng: item.lng });
+    // ✅ FIX: only send VALID coordinates to the map (null would crash Leaflet)
+    if (isValidCoord(item.lat, item.lng)) {
+      setMapIncidents([{
+        id: 1,
+        lat: item.lat,
+        lng: item.lng,
+        title: `${item.type} Incident`,
+        type: item.type,
+        severity: item.priority,
+        description: item.description,
+        time: item.reportedAt,
+      }]);
+      setMapCenter({ lat: item.lat, lng: item.lng });
+    } else {
+      // no coordinates → no pin, keep the last good center
+      setMapIncidents([]);
+    }
   };
 
   // ✅ Select an incident that was ALREADY handled earlier (found by its incidentId).
@@ -1315,7 +1337,7 @@ const IncidentIntake: React.FC<IncidentIntakeProps> = ({ onNavigateToDispatch })
     localStorage.setItem('selectedIncidentId', item.id);
 
     // Refresh the nearby landmarks so they match THIS incident
-    if (typeof item.lat === 'number' && typeof item.lng === 'number') {
+    if (isValidCoord(item.lat, item.lng)) {
       searchNearbyPlaces(item.lat, item.lng)
         .then((places) => setNearbyPlaces(places))
         .catch(() => setNearbyPlaces([]));
@@ -1347,30 +1369,6 @@ const IncidentIntake: React.FC<IncidentIntakeProps> = ({ onNavigateToDispatch })
 
     if (selectedQueueItem.status !== 'verified') {
       alert('⚠️ Please verify the incident first before forwarding to dispatch.');
-      return;
-    }
-
-    // ✅ NEW RESTRICTION: block forwarding while any report in Dispatch Responders
-    // has not yet been dispatched (its button is not "Dispatched ✓" yet).
-    try {
-      const DONE_STATUSES = ['dispatched', 'en route', 'arrived', 'resolved'];
-      const forwardedSnap = await getDocs(collection(firestore, 'forwarded_incidents'));
-
-      const hasPendingReports = forwardedSnap.docs.some((d) => {
-        const data: any = d.data();
-        const forwardedId = String(data.id || d.id);
-        if (forwardedId === selectedQueueItem.incidentId) return false; // same report
-        const status = String(data.status || '').toLowerCase().trim();
-        return !DONE_STATUSES.includes(status);
-      });
-
-      if (hasPendingReports) {
-        setShowPendingDispatchModal(true);
-        return;
-      }
-    } catch (checkError) {
-      console.error('❌ Could not verify pending dispatch reports:', checkError);
-      alert('⚠️ Unable to check Dispatch Responders right now. Please try again.');
       return;
     }
 
@@ -1598,7 +1596,7 @@ const IncidentIntake: React.FC<IncidentIntakeProps> = ({ onNavigateToDispatch })
 
           const smsKey = `SMS-${(sms.phoneNumber || 'UNKNOWN').replace(/\s+/g, '')}-${sms.receivedTime || Date.now()}`;
 
-          // ✅ FIX: this SMS was already handled earlier in this visit → don't just
+          // ✅ This SMS was already handled earlier in this visit → don't just
           // ignore the click, SELECT its incident so the page switches to it.
           if (processedSmsIds.current.has(smsKey)) {
             console.log('🔁 SMS already processed in-session — selecting it:', smsKey);
@@ -1685,7 +1683,7 @@ const IncidentIntake: React.FC<IncidentIntakeProps> = ({ onNavigateToDispatch })
             return;
           }
 
-          // ✅ FIXED: Parse coordinates from SMS text with robust parser
+          // ✅ Parse coordinates from SMS text with robust parser
           // Search across all the fields where the coords might live.
           const combinedText = [
             sms.locationText,
@@ -1701,7 +1699,7 @@ const IncidentIntake: React.FC<IncidentIntakeProps> = ({ onNavigateToDispatch })
           const lat = parsedCoords?.lat ?? null;
           const lng = parsedCoords?.lng ?? null;
 
-          // ✅ FIXED: Extract a real address (not coordinates) from the SMS
+          // ✅ Extract a real address (not coordinates) from the SMS
           const parsedAddress = parseSMSAddress(combinedText);
           const finalAddress =
             parsedAddress ||
@@ -1841,7 +1839,7 @@ const IncidentIntake: React.FC<IncidentIntakeProps> = ({ onNavigateToDispatch })
           const notificationId =
             notification.reportId || notification.id || `notif-${Date.now()}`;
 
-          // ✅ FIX: this notification was already handled earlier in this visit →
+          // ✅ This notification was already handled earlier in this visit →
           // don't just ignore the click, SELECT its incident so the page switches to it.
           if (processedNotifications.current.has(notificationId)) {
             console.log('🔁 Notification already processed — selecting it:', notificationId);
@@ -1944,7 +1942,7 @@ const IncidentIntake: React.FC<IncidentIntakeProps> = ({ onNavigateToDispatch })
             notification.location ||
             'Unknown location';
 
-          // ✅ FIXED: no more 14.5995, 120.9842 default
+          // ✅ no more 14.5995, 120.9842 default
           let lat: number | null = null;
           let lng: number | null = null;
 
@@ -2134,6 +2132,8 @@ const IncidentIntake: React.FC<IncidentIntakeProps> = ({ onNavigateToDispatch })
       </div>
     ) : null;
 
+    const hasIncidentCoords = isValidCoord(incident.lat, incident.lng);
+
     return (
       <div className="details-card">
         <div className="card-header">
@@ -2273,7 +2273,7 @@ const IncidentIntake: React.FC<IncidentIntakeProps> = ({ onNavigateToDispatch })
             </div>
           )}
 
-          {incident.lat != null && incident.lng != null && incident.id !== 'No Incident Selected' && (
+          {hasIncidentCoords && incident.id !== 'No Incident Selected' && (
             <div className="location-details-section">
               <div className="location-details-title">
                 <i className="fa fa-map"></i> Location Details
@@ -2321,6 +2321,10 @@ const IncidentIntake: React.FC<IncidentIntakeProps> = ({ onNavigateToDispatch })
     );
   };
 
+  const hasSelectedCoords =
+    isValidCoord(selectedIncident?.lat, selectedIncident?.lng) &&
+    selectedIncident?.id !== 'No Incident Selected';
+
   return (
     <div className="incident-page">
       <div className="incident-grid">
@@ -2329,18 +2333,21 @@ const IncidentIntake: React.FC<IncidentIntakeProps> = ({ onNavigateToDispatch })
         <div className="right-column">
           <div className="map-card">
             <div className="leaflet-map-container">
-              <GoogleMap
-                incidents={mapIncidents}
-                center={mapCenter}
-                zoom={13}
-                nearbyPlaces={nearbyPlaces}
-              />
+              {/* ✅ Error boundary: a bad record can only break the map, not the whole page */}
+              <ErrorBoundary>
+                <GoogleMap
+                  incidents={mapIncidents}
+                  center={mapCenter}
+                  zoom={13}
+                  nearbyPlaces={nearbyPlaces}
+                />
+              </ErrorBoundary>
             </div>
             <div className="map-address">
               <i className="fa fa-map-pin"></i>
               <span>{selectedIncident?.location?.address || 'No location selected'}</span>
             </div>
-            {selectedIncident?.lat != null && selectedIncident?.lng != null && selectedIncident?.id !== 'No Incident Selected' && (
+            {hasSelectedCoords && (
               <div className="map-coords">
                 <span>
                   <i className="fa fa-location-dot"></i>
@@ -2399,66 +2406,6 @@ const IncidentIntake: React.FC<IncidentIntakeProps> = ({ onNavigateToDispatch })
         </div>
       )}
 
-      {/* ✅ NEW: Pending dispatch warning modal */}
-      {showPendingDispatchModal && (
-        <div
-          onClick={() => setShowPendingDispatchModal(false)}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.6)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 10000,
-          }}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              background: '#0F1B38',
-              color: '#FFFFFF',
-              border: '1px solid #F59E0B',
-              borderRadius: '12px',
-              padding: '24px',
-              maxWidth: '420px',
-              width: '90%',
-              textAlign: 'center',
-              boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
-            }}
-          >
-            <div style={{ fontSize: '40px', marginBottom: '8px' }}>⚠️</div>
-            <h4 style={{ margin: '0 0 8px 0', color: '#F59E0B' }}>Warning</h4>
-            <p style={{ margin: '0 0 20px 0', fontSize: '0.9rem', lineHeight: 1.5 }}>
-              You have active reports in Dispatch Responders that have not yet been dispatched.
-              Please dispatch all active reports before forwarding this report to Dispatch.
-            </p>
-            <button
-              type="button"
-              onClick={() => {
-                setShowPendingDispatchModal(false);
-                // ✅ Go straight to the Dispatch Responders page
-                if (onNavigateToDispatch) {
-                  onNavigateToDispatch();
-                } else {
-                  window.location.href = '/dispatch-responder';
-                }
-              }}
-              style={{
-                background: '#2563EB',
-                color: '#FFFFFF',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '8px 24px',
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-            >
-              OK
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

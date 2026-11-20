@@ -1,6 +1,5 @@
 // web/src/EOCcomponents/NotificationBox.tsx
 import React, { useState, useEffect, useRef } from 'react';
-import { createPortal } from 'react-dom'; // ✅ NEW
 import {
   doc,
   setDoc,
@@ -157,29 +156,6 @@ const findReporterUserId = async (reportId: string): Promise<string | null> => {
   return match ? String(match.userId) : null;
 };
 
-// ============================================================
-// ✅ NEW HELPER: Is there an opened report in Incident Intake that has
-// NOT been forwarded to Dispatch yet? Returns its incidentId, or null.
-// ============================================================
-const getActiveUnforwardedIncidentId = async (): Promise<string | null> => {
-  try {
-    const selectedId = localStorage.getItem('selectedIncidentId');
-    if (!selectedId) return null;
-
-    const snap = await getDoc(doc(firestore, 'incident_queue', selectedId));
-    if (!snap.exists()) return null;
-
-    const data: any = snap.data();
-    if (data.isDeleted === true) return null;
-    if (data.status !== 'verified') return null; // dispatched/resolved/duplicate/review → not blocking
-
-    return String(data.incidentId || snap.id);
-  } catch (error) {
-    console.error('Error checking active incident:', error);
-    return null; // on error, never lock the EOC out
-  }
-};
-
 const NotificationBox: React.FC<NotificationBoxProps> = ({
   onNavigateToIncidentIntake,
   isOpen: externalIsOpen,
@@ -193,8 +169,6 @@ const NotificationBox: React.FC<NotificationBoxProps> = ({
   const [dropdownOpenId, setDropdownOpenId] = useState<string | null>(null);
   // ✅ controls the "Are you sure you want to delete all?" popup
   const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false);
-  // ✅ NEW: warning shown when an active report hasn't been forwarded yet
-  const [showActiveReportWarning, setShowActiveReportWarning] = useState(false);
   const dropdownRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const panelRef = useRef<HTMLDivElement | null>(null);
 
@@ -509,10 +483,14 @@ const NotificationBox: React.FC<NotificationBoxProps> = ({
   // ✅ ONE CLICK: go to Incident Intake IMMEDIATELY, verify afterwards.
   // ✅ ALSO: stop the alarm sound immediately on click.
   // ✅ NEW: clicking a report automatically marks it as READ.
+  // (no active-report guard anymore — any report can be opened at any time)
   // ============================================================
   const handleNotificationClick = (notification: Notification) => {
     // ✅ STOP THE ALARM SOUND IMMEDIATELY
     stopNotificationSound();
+
+    // ✅ Make sure nothing already shown can ring/vibrate again after this click
+    notifications.forEach((n) => alertedNotificationIdsRef.current.add(n.id));
 
     // ✅ NEW: automatically mark as read when the report is clicked
     if (!notification.read) {
@@ -550,45 +528,6 @@ const NotificationBox: React.FC<NotificationBoxProps> = ({
 
     // 2) Do the slow network work in the background
     void verifyNotificationInBackground(notification);
-  };
-
-  // ============================================================
-  // ✅ NEW: guard that runs BEFORE the existing handleNotificationClick.
-  // Blocks opening a DIFFERENT report while the current one in Incident
-  // Intake is verified but not yet forwarded to Dispatch.
-  // ============================================================
-  const handleNotificationItemClick = async (notification: Notification) => {
-    // ✅ Stop the alarm sound + vibration the INSTANT the report is clicked
-    // (before the Firestore check below, which takes a moment)
-    stopNotificationSound();
-
-    // ✅ Make sure nothing already shown can ring/vibrate again after this click
-    notifications.forEach((n) => alertedNotificationIdsRef.current.add(n.id));
-
-    const activeId = await getActiveUnforwardedIncidentId();
-
-    // Block only when a DIFFERENT report is still waiting to be forwarded
-    if (
-      activeId &&
-      activeId !== notification.reportId &&
-      activeId !== notification.id
-    ) {
-      stopNotificationSound();
-      closeDropdown();
-      setShowActiveReportWarning(true);
-      return;
-    }
-
-    handleNotificationClick(notification);
-  };
-
-  // ✅ NEW: OK on the warning → go straight to Incident Intake
-  const handleActiveWarningOk = () => {
-    setShowActiveReportWarning(false);
-    closeDropdown();
-    if (onNavigateToIncidentIntake) {
-      onNavigateToIncidentIntake();
-    }
   };
 
   const toggleThreeDotMenu = (
@@ -809,7 +748,7 @@ const NotificationBox: React.FC<NotificationBoxProps> = ({
                         !notification.read ? 'unread' : ''
                       } ${getTypeClass(notification.priority)}`}
                       onPointerDown={() => stopNotificationSound()}
-                      onClick={() => handleNotificationItemClick(notification)}
+                      onClick={() => handleNotificationClick(notification)}
                     >
                       {!notification.read && (
                         <div className="unread-indicator">
@@ -995,78 +934,6 @@ const NotificationBox: React.FC<NotificationBoxProps> = ({
           </>
         )}
       </div>
-
-      {/* ✅ NEW: Active-report warning modal (portal so it sits above everything) */}
-      {showActiveReportWarning &&
-        createPortal(
-          <div
-            style={{
-              position: 'fixed',
-              inset: 0,
-              background: 'rgba(0,0,0,0.55)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 100000,
-            }}
-          >
-            <div
-              role="alertdialog"
-              aria-modal="true"
-              aria-label="Active report warning"
-              style={{
-                background: '#ffffff',
-                borderRadius: 12,
-                padding: '24px 28px',
-                maxWidth: 440,
-                width: '90%',
-                textAlign: 'center',
-                boxShadow: '0 10px 40px rgba(0,0,0,0.35)',
-              }}
-            >
-              <div style={{ fontSize: 40, marginBottom: 8 }}>⚠️</div>
-              <h3
-                style={{
-                  margin: '0 0 10px',
-                  color: '#1F2937',
-                  fontSize: '1.1rem',
-                }}
-              >
-                Active Report in Progress
-              </h3>
-              <p
-                style={{
-                  margin: '0 0 20px',
-                  color: '#4B5563',
-                  fontSize: '0.95rem',
-                  lineHeight: 1.5,
-                }}
-              >
-                You have an active report in Incident Intake that has not yet
-                been forwarded to Dispatch. Please forward the current report
-                before opening a new report.
-              </p>
-              <button
-                type="button"
-                onClick={handleActiveWarningOk}
-                autoFocus
-                style={{
-                  background: '#2563EB',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 8,
-                  padding: '10px 32px',
-                  fontSize: '0.95rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}
-              >
-                OK
-              </button>
-            </div>
-          </div>,
-          document.body
-        )}
     </div>
   );
 };

@@ -8,12 +8,10 @@
 // ✅ NEW: Date & time = real-time Philippine time at the moment the alert is received
 // ✅ FIXED: Received time now comes from the FIRESTORE SERVER clock (serverTimestamp),
 //           so a wrong PC / phone / web-server date can no longer produce a wrong date.
-// ✅ NEW: Active-report guard (same as SmsIcon) — blocks opening another LoRa alert while
-//         the current LoRa report has not been forwarded to Dispatch (warning modal → OK)
-// ✅ FIXED (build): removed unused `lastClockSync` variable (TS6133 / noUnusedLocals)
+// ✅ REMOVED: Active-report guard (queueing) — any LoRa alert can now be opened
+//             even if the current LoRa report has not been forwarded to Dispatch.
 
 import React, { useEffect, useState, useCallback, useRef } from "react";
-import { createPortal } from "react-dom"; // ✅ NEW
 import "../css/lora.css";
 
 import {
@@ -27,8 +25,7 @@ import {
   getDocs,
   getDoc, // ✅ FIXED: read back the server time
   addDoc,
-  serverTimestamp, // ✅ FIXED: exact server time
-  where // ✅ NEW
+  serverTimestamp // ✅ FIXED: exact server time
 } from "firebase/firestore";
 
 import { firestore } from "../firebase";
@@ -139,94 +136,6 @@ const deleteAlertDoc = (firebaseId: string) => {
   deleteDoc(doc(firestore, "lora_alerts", firebaseId)).catch((error) => {
     console.warn("Could not delete alert doc (offline?):", error?.message || error);
   });
-};
-
-// ===============================
-// ✅ NEW: ACTIVE-REPORT GUARD HELPERS
-// A LoRa report is "active" from the moment it is opened from this dropdown
-// until it is forwarded to Dispatch from the LoRa Device page.
-// ===============================
-const LORA_ACTIVE_KEY = 'loraActiveReport';
-
-interface ActiveLoraReport {
-  deviceId: string;
-  coordinates: string;
-  type: string;
-}
-
-const alertToActiveReport = (a: {
-  deviceId: string;
-  latitude: string;
-  longitude: string;
-  incidentType: string;
-}): ActiveLoraReport => ({
-  deviceId: a.deviceId,
-  coordinates: `${a.latitude}, ${a.longitude}`,
-  type: a.incidentType,
-});
-
-// Compares coordinates numerically so "10.2216" and "10.221600" count as equal
-const normalizeCoords = (c: string): string =>
-  String(c)
-    .split(',')
-    .map((p) => {
-      const n = parseFloat(p);
-      return isNaN(n) ? p.trim() : n.toFixed(5);
-    })
-    .join(',');
-
-const isSameReport = (a: ActiveLoraReport, b: ActiveLoraReport): boolean =>
-  a.deviceId === b.deviceId &&
-  a.type === b.type &&
-  normalizeCoords(a.coordinates) === normalizeCoords(b.coordinates);
-
-// Returns the opened LoRa report that has NOT been forwarded to Dispatch yet, or null.
-const getActiveUnforwardedLoraReport = async (): Promise<ActiveLoraReport | null> => {
-  try {
-    const raw = localStorage.getItem(LORA_ACTIVE_KEY);
-    if (!raw) return null;
-
-    const active = JSON.parse(raw) as ActiveLoraReport;
-
-    // 1) Already forwarded from the LoRa Device page (it saves this list on forward)
-    try {
-      const forwarded = JSON.parse(localStorage.getItem('forwardedIncidents') || '[]');
-      if (
-        Array.isArray(forwarded) &&
-        forwarded.some(
-          (f: any) =>
-            f?.deviceId === active.deviceId &&
-            normalizeCoords(f?.coordinates || '') === normalizeCoords(active.coordinates)
-        )
-      ) {
-        localStorage.removeItem(LORA_ACTIVE_KEY);
-        return null;
-      }
-    } catch {
-      // ignore a corrupt list
-    }
-
-    // 2) Already forwarded / finished according to Firestore
-    const snap = await getDocs(
-      query(collection(firestore, 'lora_incidents'), where('deviceId', '==', active.deviceId))
-    );
-    const finished = snap.docs.some((d) => {
-      const x: any = d.data();
-      return (
-        normalizeCoords(x.coordinates || '') === normalizeCoords(active.coordinates) &&
-        ['forwarded', 'dispatched', 'resolved', 'rejected'].includes(x.status)
-      );
-    });
-    if (finished) {
-      localStorage.removeItem(LORA_ACTIVE_KEY);
-      return null;
-    }
-
-    return active;
-  } catch (error) {
-    console.error('Error checking active LoRa report:', error);
-    return null; // on error, never lock the EOC out
-  }
 };
 
 // ===============================
@@ -361,8 +270,6 @@ const LoraAlert: React.FC<LoraAlertProps> = ({ onNavigateToLoraDevice }) => {
   const [isAnimating, setIsAnimating] = useState(false);
   // ✅ NEW: controls the "Are you sure you want to delete all?" popup
   const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false);
-  // ✅ NEW: warning shown when an active report hasn't been forwarded yet
-  const [showActiveReportWarning, setShowActiveReportWarning] = useState(false);
 
   const processedAlertIds = useRef<Set<string>>(new Set());
 
@@ -811,6 +718,7 @@ const LoraAlert: React.FC<LoraAlertProps> = ({ onNavigateToLoraDevice }) => {
 
   // =================================
   // HANDLE REPORT CLICK - Navigate to Lora Device
+  // (no active-report guard anymore — any alert can be opened at any time)
   // =================================
 
   const handleReportClick = (alert: Alert) => {
@@ -863,45 +771,6 @@ const LoraAlert: React.FC<LoraAlertProps> = ({ onNavigateToLoraDevice }) => {
         new CustomEvent('newLoraIncident', { detail: incidentData })
       );
     }, 0);
-  };
-
-  // =================================
-  // ✅ NEW: guard that runs BEFORE the existing handleReportClick.
-  // Blocks opening a DIFFERENT LoRa alert while the current report is
-  // not yet forwarded to Dispatch.
-  // =================================
-  const handleReportItemClick = async (alert: Alert) => {
-    // Stop the alarm the INSTANT the alert is clicked
-    stopNotificationSound();
-
-    const active = await getActiveUnforwardedLoraReport();
-    const clicked = alertToActiveReport(alert);
-
-    // Block only when a DIFFERENT report is still waiting to be forwarded
-    if (active && !isSameReport(active, clicked)) {
-      stopNotificationSound();
-      setIsOpen(false);
-      setShowActiveReportWarning(true);
-      return;
-    }
-
-    // Remember this report as the active one until it is forwarded
-    try {
-      localStorage.setItem(LORA_ACTIVE_KEY, JSON.stringify(clicked));
-    } catch {
-      // ignore storage errors
-    }
-
-    handleReportClick(alert);
-  };
-
-  // ✅ NEW: OK on the warning → go straight to the LoRa Device page
-  const handleActiveWarningOk = () => {
-    setShowActiveReportWarning(false);
-    setIsOpen(false);
-    if (onNavigateToLoraDevice) {
-      onNavigateToLoraDevice();
-    }
   };
 
   // =================================
@@ -1115,7 +984,7 @@ const LoraAlert: React.FC<LoraAlertProps> = ({ onNavigateToLoraDevice }) => {
                         <div
                           key={alert.id}
                           className={`notification-item ${!alert.read ? 'unread' : ''} notification-critical`}
-                          onClick={() => handleReportItemClick(alert)}
+                          onClick={() => handleReportClick(alert)}
                         >
                           {!alert.read && (
                             <div className="unread-indicator">
@@ -1270,78 +1139,6 @@ const LoraAlert: React.FC<LoraAlertProps> = ({ onNavigateToLoraDevice }) => {
           )}
         </div>
       </div>
-
-      {/* ✅ NEW: Active-report warning modal (portal so it sits above everything) */}
-      {showActiveReportWarning &&
-        createPortal(
-          <div
-            style={{
-              position: 'fixed',
-              inset: 0,
-              background: 'rgba(0,0,0,0.55)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 100000,
-            }}
-          >
-            <div
-              role="alertdialog"
-              aria-modal="true"
-              aria-label="Active report warning"
-              style={{
-                background: '#ffffff',
-                borderRadius: 12,
-                padding: '24px 28px',
-                maxWidth: 440,
-                width: '90%',
-                textAlign: 'center',
-                boxShadow: '0 10px 40px rgba(0,0,0,0.35)',
-              }}
-            >
-              <div style={{ fontSize: 40, marginBottom: 8 }}>⚠️</div>
-              <h3
-                style={{
-                  margin: '0 0 10px',
-                  color: '#1F2937',
-                  fontSize: '1.1rem',
-                }}
-              >
-                Active Report in Progress
-              </h3>
-              <p
-                style={{
-                  margin: '0 0 20px',
-                  color: '#4B5563',
-                  fontSize: '0.95rem',
-                  lineHeight: 1.5,
-                }}
-              >
-                You have an active report in Incident Intake that has not yet
-                been forwarded to Dispatch. Please forward the current report
-                before opening a new report.
-              </p>
-              <button
-                type="button"
-                onClick={handleActiveWarningOk}
-                autoFocus
-                style={{
-                  background: '#2563EB',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 8,
-                  padding: '10px 32px',
-                  fontSize: '0.95rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}
-              >
-                OK
-              </button>
-            </div>
-          </div>,
-          document.body
-        )}
     </>
   );
 };
