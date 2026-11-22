@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { getAuth, createUserWithEmailAndPassword, sendPasswordResetEmail, signOut } from 'firebase/auth';
+import React, { useState, useEffect, useRef } from 'react';
+import { getAuth, createUserWithEmailAndPassword, sendPasswordResetEmail, sendEmailVerification, signOut } from 'firebase/auth';
 import { getApp, getApps, initializeApp } from 'firebase/app';
 import {
   getFirestore, doc, setDoc, updateDoc, deleteDoc, getDoc, collection, getDocs,
@@ -18,6 +18,117 @@ const PASSWORD_RULES = [
   { key: 'num',   label: 'One number (0–9)',                          test: (p: string) => /[0-9]/.test(p) },
   { key: 'sym',   label: 'One special character (! # $ % ^ & * + =)', test: (p: string) => /[!#$%^&*+=]/.test(p) },
 ];
+
+// Age must be a whole number, 18 and above (no upper limit)
+const MIN_AGE = 18;
+const AGE_ERROR = 'Age must be 18 and above';
+
+// Mobile number: exactly 11 digits and must start with 09
+const PHONE_REGEX = /^09\d{9}$/;
+const PHONE_START_ERROR = 'Mobile number must start with 09';
+const PHONE_FULL_ERROR = 'Mobile number must start with 09 and be exactly 11 digits';
+
+// ---------- Validation rules ----------
+// Names: letters (including accented letters like ñ), single spaces, hyphens and apostrophes only.
+// Must start and end with a letter. No digits or other special characters.
+const NAME_REGEX = /^\p{L}+(?:[ '’-]\p{L}+)*$/u;
+// Email: username @ domain . extension (e.g. name@gmail.com)
+// - username: letters/digits, with single . _ % + - separators between them
+// - domain: one or more labels followed by a dot
+// - extension: at least 2 letters (.com, .ph, .org ...)
+const EMAIL_REGEX = /^[A-Za-z0-9]+(?:[._%+-][A-Za-z0-9]+)*@(?:[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*\.)+[A-Za-z]{2,}$/;
+
+const NAME_ERROR = 'Only letters, spaces, hyphens (-) and apostrophes (\') are allowed';
+
+// ---------- Email domain validation ----------
+// Known-good email provider domains. Add institutional domains you actually use.
+const ALLOWED_DOMAINS = new Set([
+  // Public providers
+  'gmail.com', 'googlemail.com',
+  'yahoo.com', 'yahoo.com.ph', 'ymail.com', 'rocketmail.com',
+  'outlook.com', 'hotmail.com', 'live.com', 'msn.com',
+  'icloud.com', 'me.com', 'mac.com',
+  'proton.me', 'protonmail.com', 'pm.me',
+  'aol.com', 'gmx.com', 'gmx.net', 'zoho.com',
+  'yandex.com', 'mail.com',
+  // Institutional / government (add your own)
+  'cdrrmo.gov.ph', 'naga.gov.ph', 'gov.ph',
+]);
+
+// Common misspellings → correct domain (case-insensitive)
+const DOMAIN_TYPOS: Record<string, string> = {
+  // Gmail typos
+  'gmil.com': 'gmail.com',
+  'gmial.com': 'gmail.com',
+  'gmlie.com': 'gmail.com',
+  'gamil.com': 'gmail.com',
+  'gmaill.com': 'gmail.com',
+  'gnail.com': 'gmail.com',
+  'gmail.co': 'gmail.com',
+  'gmail.cm': 'gmail.com',
+  'gmail.con': 'gmail.com',
+  'gmail.comm': 'gmail.com',
+  'gmailcom': 'gmail.com',
+  'gmail.ph': 'gmail.com',
+  'gmailcom.ph': 'gmail.com',
+  'gmail.cim': 'gmail.com',
+  'gmail.om': 'gmail.com',
+  'gmail.ocm': 'gmail.com',
+  'gmai.com': 'gmail.com',
+  'gmal.com': 'gmail.com',
+  'gma.com': 'gmail.com',
+  // Yahoo typos
+  'yahoo.co': 'yahoo.com',
+  'yahooo.com': 'yahoo.com',
+  'yaho.com': 'yahoo.com',
+  'yahoo.con': 'yahoo.com',
+  'yahoo.cm': 'yahoo.com',
+  'yhaoo.com': 'yahoo.com',
+  // Hotmail typos
+  'hotmai.com': 'hotmail.com',
+  'hotmal.com': 'hotmail.com',
+  'hotmial.com': 'hotmail.com',
+  'hotmail.co': 'hotmail.com',
+  // Outlook typos
+  'outlok.com': 'outlook.com',
+  'outloo.com': 'outlook.com',
+  'outllok.com': 'outlook.com',
+  'outlook.co': 'outlook.com',
+  // iCloud typos
+  'iclod.com': 'icloud.com',
+  'iclould.com': 'icloud.com',
+  'iclou.com': 'icloud.com',
+  'icloud.co': 'icloud.com',
+};
+
+const getEmailError = (raw: string): string => {
+  const email = raw.trim();
+  if (!email) return 'Email is required';
+  if (/\s/.test(email)) return 'Email must not contain spaces';
+  if (!email.includes('@')) return 'Email is missing the @ symbol (e.g. name@gmail.com)';
+
+  const [user, ...rest] = email.split('@');
+  if (rest.length > 1) return 'Email must contain only one @ symbol';
+  const domain = (rest[0] || '').toLowerCase();
+
+  if (!user) return 'Email is missing the username before @';
+  if (!domain) return 'Email is missing the domain after @ (e.g. gmail.com)';
+  if (!domain.includes('.')) return 'Email domain is missing a dot and extension (e.g. gmail.com)';
+  if (domain.endsWith('.')) return 'Email is missing the extension after the dot (e.g. .com)';
+  if (!EMAIL_REGEX.test(email)) return 'Enter a valid email address (e.g. name@gmail.com)';
+
+  // Catch misspelled provider domains (gmil.com, gmlie.com, etc.)
+  if (DOMAIN_TYPOS[domain]) {
+    return `Did you mean "${DOMAIN_TYPOS[domain]}"? "${domain}" is not a valid email provider.`;
+  }
+
+  // Only allow known providers / institutional domains
+  if (!ALLOWED_DOMAINS.has(domain)) {
+    return `"${domain}" is not an allowed email domain. Use a valid provider (gmail.com, yahoo.com, outlook.com...) or your official institutional domain.`;
+  }
+
+  return '';
+};
 
 // Labels must match the Flutter app (settings_menu.dart → _kFields)
 const FIELD_LABELS: Record<string, string> = {
@@ -97,11 +208,12 @@ interface ComboFieldProps {
   options: string[];
   onChange: (v: string) => void;
   required?: boolean;
+  error?: string;
 }
 
 // Typeable input that always shows the full suggestion list on focus.
 // Typing filters the list; the user can still enter any custom value.
-const ComboField: React.FC<ComboFieldProps> = ({ label, value, options, onChange, required = false }) => {
+const ComboField: React.FC<ComboFieldProps> = ({ label, value, options, onChange, required = false, error = '' }) => {
   const [open, setOpen] = useState(false);
   const [filtering, setFiltering] = useState(false);
 
@@ -117,7 +229,7 @@ const ComboField: React.FC<ComboFieldProps> = ({ label, value, options, onChange
       <div className="combo-wrap">
         <input
           type="text"
-          className="combo-input"
+          className={`combo-input ${error ? 'has-error' : ''}`}
           value={value}
           placeholder={`Type or select ${label.toLowerCase()}`}
           autoComplete="off"
@@ -144,6 +256,7 @@ const ComboField: React.FC<ComboFieldProps> = ({ label, value, options, onChange
           </ul>
         )}
       </div>
+      {error && <span className="vot-field-hint error">{error}</span>}
     </div>
   );
 };
@@ -179,11 +292,17 @@ const ManageUsers: React.FC<ManageUsersProps> = ({ onEOCCreating, onUsersLoaded 
   const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [editData, setEditData] = useState<any>({});
   const [editPhoneError, setEditPhoneError] = useState('');
+  const [editNameError, setEditNameError] = useState('');
+  const [editAgeError, setEditAgeError] = useState('');
 
   const [selectedUserType, setSelectedUserType] = useState<'eoc' | 'responder' | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [roleFilter, setRoleFilter] = useState<string>('all');
+
+  // ---- Role filter dropdown + 3-dot action menu ----
+  const [roleMenuOpen, setRoleMenuOpen] = useState(false);
+  const [actionMenu, setActionMenu] = useState<{ id: string; top: number; left: number } | null>(null);
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -192,6 +311,27 @@ const ManageUsers: React.FC<ManageUsersProps> = ({ onEOCCreating, onUsersLoaded 
   const [createdUser, setCreatedUser] = useState<{ name: string; email: string; password: string; role: string; userType: 'eoc' | 'responder'; } | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [phoneError, setPhoneError] = useState<string>('');
+
+  // ---- Add User validation state ----
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [formBanner, setFormBanner] = useState<string>('');
+
+  // ---- Email verification before the account is finalized ----
+  const [verifyStep, setVerifyStep] = useState<'idle' | 'waiting'>('idle');
+  // The popup can be hidden (OK) while we keep waiting for verification in the background.
+  // The table then shows a "Pending" row; clicking it re-opens the popup.
+  const [showVerifyModal, setShowVerifyModal] = useState(false);
+  const [pendingUser, setPendingUser] = useState<{
+    name: string; email: string; role: string; phone: string; department: string; joinedDate: string;
+  } | null>(null);
+  const [verifyError, setVerifyError] = useState('');
+  const [verifyInfo, setVerifyInfo] = useState('');
+  const [isResending, setIsResending] = useState(false);
+  const finalizingRef = useRef(false);
+  const pendingRef = useRef<{
+    uid: string; email: string; password: string; name: string; role: string;
+    type: 'eoc' | 'responder'; userData: any; file: File | null;
+  } | null>(null);
 
   // @ts-ignore
   const [currentPage, setCurrentPage] = useState(1);
@@ -208,24 +348,68 @@ const ManageUsers: React.FC<ManageUsersProps> = ({ onEOCCreating, onUsersLoaded 
     return () => URL.revokeObjectURL(url);
   }, [selectedFile]);
 
+  // Close the 3-dot action menu when the page scrolls or the window resizes
+  useEffect(() => {
+    if (!actionMenu) return;
+    const close = () => setActionMenu(null);
+    window.addEventListener('resize', close);
+    window.addEventListener('scroll', close, true);
+    return () => {
+      window.removeEventListener('resize', close);
+      window.removeEventListener('scroll', close, true);
+    };
+  }, [actionMenu]);
+
+  const clearFieldError = (key: string) =>
+    setFormErrors(prev => {
+      if (!prev[key]) return prev;
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+
+  // Updates a form value and clears that field's validation error
+  const updateForm = (key: keyof typeof formData, value: string) => {
+    setFormData(prev => ({ ...prev, [key]: value }));
+    clearFieldError(key as string);
+  };
+
   const setField = (key: keyof typeof formData) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
-      setFormData(prev => ({ ...prev, [key]: e.target.value }));
+      updateForm(key, e.target.value);
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const digits = e.target.value.replace(/\D/g, '').slice(0, 11);
-    setFormData(prev => ({ ...prev, phone: digits }));
-    setPhoneError(digits.length > 0 && digits.length !== 11 ? `${digits.length}/11 digits` : '');
+    updateForm('phone', digits);
+    let err = '';
+    if (digits.length > 0 && !'09'.startsWith(digits.slice(0, 2))) err = PHONE_START_ERROR;
+    else if (digits.length > 0 && digits.length !== 11) err = `${digits.length}/11 digits`;
+    setPhoneError(err);
   };
 
+  // Age input: keep only digits while typing, cap at 3 chars
+  const handleAgeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const digits = e.target.value.replace(/\D/g, '').slice(0, 3);
+    updateForm('age', digits);
+  };
+
+  const renderError = (key: string) =>
+    formErrors[key] ? <span className="vot-field-hint error">{formErrors[key]}</span> : null;
+
   // Fixed dropdown (user can only pick from the list)
-  const renderSelect = (label: string, key: keyof typeof formData, options: string[], required = false) => (
+  const renderSelect = (label: string, key: keyof typeof formData, options: string[], required = true) => (
     <div className="form-group">
       <label>{label}{required && <span className="required">*</span>}</label>
-      <select value={formData[key] as string} onChange={setField(key)} required={required}>
+      <select
+        value={formData[key] as string}
+        onChange={setField(key)}
+        required={required}
+        className={formErrors[key as string] ? 'has-error' : ''}
+      >
         <option value="">Select {label.toLowerCase()}</option>
         {options.map(o => <option key={o} value={o}>{o}</option>)}
       </select>
+      {renderError(key as string)}
     </div>
   );
 
@@ -441,7 +625,9 @@ const ManageUsers: React.FC<ManageUsersProps> = ({ onEOCCreating, onUsersLoaded 
     } catch (err: any) { alert(`❌ Failed: ${err.message}`); return false; }
   };
 
-  const uniqueRoles = ['all', ...new Set(users.map(u => u.role))];
+  // Combine predefined roles with any custom roles already existing in the database
+  const uniqueRoles = ['all', ...new Set([...RESPONDER_ROLES, ...users.map(u => u.role).filter(Boolean)])];
+  
   const filteredUsers = users.filter(u => {
     const s = searchTerm.toLowerCase();
     const matchSearch = u.name.toLowerCase().includes(s) || u.role.toLowerCase().includes(s) || u.email.toLowerCase().includes(s) || (u.department || '').toLowerCase().includes(s);
@@ -458,35 +644,126 @@ const ManageUsers: React.FC<ManageUsersProps> = ({ onEOCCreating, onUsersLoaded 
 
   const handleUserTypeSelect = (type: 'eoc' | 'responder') => {
     setSelectedUserType(type); setShowUserTypeModal(false); setShowModal(true); setPhoneError('');
+    setFormErrors({}); setFormBanner('');
     const pw = generateStrongPassword();
     if (type === 'eoc') setFormData(prev => ({ ...prev, role: 'EOC Personnel', station: '', badgeNumber: '', specialization: '', password: pw, confirmPassword: pw }));
     else setFormData(prev => ({ ...prev, role: 'Emergency Responder', station: '', badgeNumber: '', specialization: '', responderId: generateResponderId(), password: pw, confirmPassword: pw }));
   };
 
+  const closeAddModal = () => { setShowModal(false); setFormErrors({}); setFormBanner(''); };
+
+  // ---------- Add User validation ----------
+  // Returns every error found (required, name format, email format, phone, age, password match).
+  const validateNewUser = (): { errors: Record<string, string>; missing: string[] } => {
+    const errors: Record<string, string> = {};
+    const missing: string[] = [];
+    const isEOC = selectedUserType === 'eoc';
+
+    const requireField = (key: keyof typeof formData, label: string): boolean => {
+      if (!String(formData[key] ?? '').trim()) {
+        errors[key as string] = `${label} is required`;
+        missing.push(label);
+        return false;
+      }
+      return true;
+    };
+
+    if (isEOC) {
+      if (requireField('name', 'Full name') && !NAME_REGEX.test(formData.name.trim())) errors.name = NAME_ERROR;
+      requireField('status', 'Status');
+    } else {
+      if (requireField('firstName', 'First name') && !NAME_REGEX.test(formData.firstName.trim())) errors.firstName = NAME_ERROR;
+      if (requireField('lastName', 'Last name') && !NAME_REGEX.test(formData.lastName.trim())) errors.lastName = NAME_ERROR;
+      requireField('gender', 'Gender');
+      if (requireField('age', 'Age')) {
+        const ageStr = String(formData.age).trim();
+        const ageNum = Number(ageStr);
+        // Whole numbers only, 18 and above
+        if (!/^\d+$/.test(ageStr) || !Number.isInteger(ageNum) || ageNum < MIN_AGE) {
+          errors.age = AGE_ERROR;
+        }
+      }
+      requireField('status', 'Status');
+      requireField('role', 'Role');
+      requireField('team', 'Team');
+      requireField('capabilities', 'Capabilities');
+    }
+
+    // Email (validated against the misspelled-domain check too)
+    if (!formData.email.trim()) {
+      errors.email = 'Email is required';
+      missing.push('Email');
+    } else {
+      const emailErr = getEmailError(formData.email);
+      if (emailErr) errors.email = emailErr;
+    }
+
+    // Mobile number
+    if (requireField('phone', 'Mobile number') && !PHONE_REGEX.test(formData.phone)) {
+      errors.phone = PHONE_FULL_ERROR;
+    }
+
+    // Passwords
+    requireField('password', 'Password');
+    if (requireField('confirmPassword', 'Confirm password') && formData.password && formData.password !== formData.confirmPassword) {
+      errors.confirmPassword = 'Passwords do not match';
+    }
+
+    return { errors, missing };
+  };
+
+  const scrollToFirstError = () => {
+    setTimeout(() => {
+      const el = document.querySelector('.modal-box .has-error, .modal-box .password-input-wrapper.has-error');
+      if (el && 'scrollIntoView' in el) (el as HTMLElement).scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 50);
+  };
+
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData.password !== formData.confirmPassword) return alert('Passwords do not match!');
-    // Show the requirements popup if the password breaks any rule
+
+    // 1) Validate everything BEFORE touching Firebase — nothing is created if anything is wrong
+    const { errors, missing } = validateNewUser();
+    const errorCount = Object.keys(errors).length;
+    if (errorCount > 0) {
+      setFormErrors(errors);
+      const invalidCount = errorCount - missing.length;
+      let banner = '';
+      if (missing.length > 0) banner = `Please fill in all required fields: ${missing.join(', ')}.`;
+      if (invalidCount > 0) banner += `${banner ? ' ' : ''}Please correct the ${invalidCount} highlighted field${invalidCount > 1 ? 's' : ''} with invalid information.`;
+      setFormBanner(banner);
+      scrollToFirstError();
+      return;
+    }
+    setFormErrors({}); setFormBanner('');
+
+    // 2) Show the requirements popup if the password breaks any rule
     if (PASSWORD_RULES.some(r => !r.test(formData.password))) { setShowPasswordRules(true); return; }
-    if (formData.phone && !/^\d{11}$/.test(formData.phone)) return alert('❌ Mobile Number must be exactly 11 digits.');
-    if (!formData.email.trim()) return alert("❌ Please enter the user's real email address.");
+
     setIsCreating(true); if (onEOCCreating) onEOCCreating(true);
     try {
-      const db = getFirestore();
-      const email = formData.email.trim();
+      // Normalize the email to lowercase so Firebase Auth treats it consistently
+      const email = formData.email.trim().toLowerCase();
+      const fullName = selectedUserType === 'eoc'
+        ? formData.name.trim()
+        : `${formData.firstName.trim()} ${formData.lastName.trim()}`.trim();
 
-      // Create the account on a SECONDARY Firebase app so the admin session
-      // (name + email shown in Settings) is never replaced by the new user.
+      // 1) Create the auth account on a SECONDARY Firebase app so the admin session
+      //    (name + email shown in Settings) is never replaced by the new user.
       const creatorAuth = getCreatorAuth();
       const cred = await createUserWithEmailAndPassword(creatorAuth, email, formData.password);
       const firebaseUser = cred.user;
-      let profileUrl = formData.profile || 'https://i.imgur.com/HeIi0wU.png';
-      if (selectedFile) { const uploaded = await uploadProfileImage(selectedFile, firebaseUser.uid); if (uploaded) profileUrl = uploaded; }
+
+      // 2) Send the verification link to the new user's email
+      await sendEmailVerification(firebaseUser);
+
+      // 3) Build the profile data, but DO NOT save it yet (saved after verification)
       let userData: any = {
-        uid: firebaseUser.uid, name: formData.name || `${formData.firstName} ${formData.lastName}`.trim(),
-        role: formData.role, email, phone: formData.phone || '', profile: profileUrl, status: 'active',
+        uid: firebaseUser.uid, name: fullName,
+        role: formData.role, email, phone: formData.phone || '', status: 'active',
         civilStatus: formData.status || '',
-        createdAt: new Date().toISOString(), joinedDate: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+        createdAt: new Date().toISOString(),
+        joinedDate: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
         isManagedUser: true, requirePasswordChange: false,
       };
       if (selectedUserType === 'eoc') {
@@ -494,7 +771,7 @@ const ManageUsers: React.FC<ManageUsersProps> = ({ onEOCCreating, onUsersLoaded 
       } else {
         userData = {
           ...userData,
-          firstName: formData.firstName || '', lastName: formData.lastName || '',
+          firstName: formData.firstName.trim(), lastName: formData.lastName.trim(),
           responderId: formData.responderId || generateResponderId(),
           agency: 'Naga City CDRRMO', // hidden default (field removed from the form)
           team: formData.team || '', gender: formData.gender || '', age: formData.age || '',
@@ -503,32 +780,135 @@ const ManageUsers: React.FC<ManageUsersProps> = ({ onEOCCreating, onUsersLoaded 
           specialization: '', type: 'responder', userType: 'responder',
         };
       }
-      // Written with the ADMIN's session (main auth), not the new user's
-      await setDoc(doc(db, 'manage_users', firebaseUser.uid), userData);
+
+      pendingRef.current = {
+        uid: firebaseUser.uid, email, password: formData.password, name: fullName,
+        role: formData.role, type: selectedUserType as 'eoc' | 'responder',
+        userData, file: selectedFile,
+      };
+
+      // 4) Close the form and open the "waiting for verification" popup
+      finalizingRef.current = false;
+      setVerifyError(''); setVerifyInfo('');
+      setPendingUser({
+        name: fullName, email, role: formData.role, phone: formData.phone || '',
+        department: userData.department || '', joinedDate: userData.joinedDate,
+      });
+      setShowModal(false);
+      setVerifyStep('waiting');
+      setShowVerifyModal(true);
+    } catch (err: any) {
+      let msg = 'Failed to create user. Please try again.';
+      if (err.code === 'auth/email-already-in-use') {
+        msg = 'This email is already registered.';
+        setFormErrors(prev => ({ ...prev, email: msg }));
+      } else if (err.code === 'auth/invalid-email') {
+        msg = 'Invalid email address.';
+        setFormErrors(prev => ({ ...prev, email: msg }));
+      } else if (err.code === 'auth/weak-password') msg = 'Password is too weak.';
+      alert(`❌ ${msg}`);
+      if (onEOCCreating) onEOCCreating(false);
+    } finally { setIsCreating(false); }
+  };
+
+  // ---------- Email verification flow ----------
+  // Called once the new user has clicked the verification link
+  const finalizeAccount = async () => {
+    const p = pendingRef.current;
+    if (!p || finalizingRef.current) return;
+    finalizingRef.current = true;
+    try {
+      const db = getFirestore();
+      const creatorAuth = getCreatorAuth();
+
+      let profileUrl = 'https://i.imgur.com/HeIi0wU.png';
+      if (p.file) { const up = await uploadProfileImage(p.file, p.uid); if (up) profileUrl = up; }
+
+      const userData = { ...p.userData, profile: profileUrl, emailVerified: true };
+
+      // Saved with the ADMIN's session (main auth), not the new user's
+      await setDoc(doc(db, 'manage_users', p.uid), userData);
 
       // Close the temporary session of the new account (admin stays logged in)
       await signOut(creatorAuth);
 
-      await logActivity({ icon: 'user-check', tone: 'forest', title: selectedUserType === 'eoc' ? 'New EOC account created' : 'New responder account created', meta: `${userData.name} (${formData.role}) assigned to ${userData.department || 'Naga City'}` });
+      await logActivity({
+        icon: 'user-check', tone: 'forest',
+        title: p.type === 'eoc' ? 'New EOC account created' : 'New responder account created',
+        meta: `${userData.name} (${p.role}) verified their email and was assigned to ${userData.department || 'Naga City'}`,
+      });
+
       const newUser: User = {
-        id: firebaseUser.uid, name: userData.name, role: formData.role, email, phone: formData.phone,
+        id: p.uid, name: userData.name, role: p.role, email: p.email, phone: userData.phone,
         department: userData.department, profile: profileUrl, status: 'active',
-        type: selectedUserType === 'eoc' ? 'admin' : 'responder', uid: firebaseUser.uid, station: userData.station,
+        type: p.type === 'eoc' ? 'admin' : 'responder', uid: p.uid, station: userData.station,
         specialization: userData.specialization, badgeNumber: userData.badgeNumber || userData.responderId,
-        userType: selectedUserType as 'eoc' | 'responder', joinedDate: userData.joinedDate, isManagedUser: true,
+        userType: p.type, joinedDate: userData.joinedDate, isManagedUser: true,
       };
       setUsers(prev => [newUser, ...prev]);
-      setCreatedUser({ name: userData.name, email, password: formData.password, role: formData.role, userType: selectedUserType as 'eoc' | 'responder' });
-      setShowModal(false); setShowSuccessModal(true);
+      setCreatedUser({ name: userData.name, email: p.email, password: p.password, role: p.role, userType: p.type });
+
+      pendingRef.current = null;
+      setPendingUser(null);
+      setShowVerifyModal(false);
+      setVerifyStep('idle');
+      setShowSuccessModal(true);
       setFormData({ ...EMPTY_FORM });
       setSelectedFile(null); setPhoneError('');
+      setFormErrors({}); setFormBanner('');
+      if (onEOCCreating) onEOCCreating(false);
     } catch (err: any) {
-      let msg = 'Failed to create user. Please try again.';
-      if (err.code === 'auth/email-already-in-use') msg = 'This email is already registered.';
-      else if (err.code === 'auth/invalid-email') msg = 'Invalid email address.';
-      else if (err.code === 'auth/weak-password') msg = 'Password is too weak.';
-      alert(`❌ ${msg}`);
-    } finally { setIsCreating(false); if (onEOCCreating) onEOCCreating(false); }
+      finalizingRef.current = false;
+      setVerifyError(err.message || 'Failed to save the account. Please try again.');
+      setShowVerifyModal(true); // bring the popup back so the admin can see the error
+    }
+  };
+
+  const checkVerified = async (manual = false) => {
+    const u = getCreatorAuth().currentUser;
+    if (!u || finalizingRef.current) return;
+    try {
+      await u.reload();
+      if (u.emailVerified) await finalizeAccount();
+      else if (manual) setVerifyError(`Not verified yet. Ask the user to open the link sent to ${pendingRef.current?.email}.`);
+    } catch (err: any) {
+      if (manual) setVerifyError(err.message || 'Could not check verification.');
+    }
+  };
+
+  // Poll every 4 seconds while the popup is open
+  useEffect(() => {
+    if (verifyStep !== 'waiting') return;
+    const id = setInterval(() => { checkVerified(false); }, 4000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [verifyStep]);
+
+  const handleResendVerification = async () => {
+    const u = getCreatorAuth().currentUser;
+    if (!u) return;
+    setIsResending(true); setVerifyError(''); setVerifyInfo('');
+    try {
+      await sendEmailVerification(u);
+      setVerifyInfo('Verification link sent again.');
+    } catch (err: any) {
+      setVerifyError(err.code === 'auth/too-many-requests'
+        ? 'Too many requests. Please wait a moment and try again.'
+        : (err.message || 'Failed to resend.'));
+    } finally { setIsResending(false); }
+  };
+
+  // Cancel → remove the unverified auth account so nothing is left behind
+  const cancelVerification = async () => {
+    if (finalizingRef.current) return;
+    const creatorAuth = getCreatorAuth();
+    try { if (creatorAuth.currentUser) await creatorAuth.currentUser.delete(); } catch (e) { console.warn(e); }
+    try { await signOut(creatorAuth); } catch {}
+    pendingRef.current = null;
+    setPendingUser(null);
+    setShowVerifyModal(false);
+    setVerifyStep('idle'); setVerifyError(''); setVerifyInfo('');
+    if (onEOCCreating) onEOCCreating(false);
   };
 
   const openResetLinkModal = (request: ResetRequest) => { setSelectedRequest(request); setResetLinkError(''); setResetLinkSuccess(false); setShowResetLinkModal(true); };
@@ -588,8 +968,18 @@ const ManageUsers: React.FC<ManageUsersProps> = ({ onEOCCreating, onUsersLoaded 
   };
 
   // ---------- View / Edit details ----------
-  const setEdit = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+  const setEdit = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setEditData((p: any) => ({ ...p, [k]: e.target.value }));
+    if (k === 'name' || k === 'firstName' || k === 'lastName') setEditNameError('');
+    if (k === 'age') setEditAgeError('');
+  };
+
+  // Age input in the Edit modal: digits only, max 3 chars
+  const handleEditAgeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const digits = e.target.value.replace(/\D/g, '').slice(0, 3);
+    setEditData((p: any) => ({ ...p, age: digits }));
+    setEditAgeError('');
+  };
 
   // `req` is passed when the admin clicks "Review & Edit" on a responder's request:
   // the modal opens straight in edit mode with the requested values pre-filled.
@@ -598,6 +988,8 @@ const ManageUsers: React.FC<ManageUsersProps> = ({ onEOCCreating, onUsersLoaded 
     setReviewRequest(req || null);
     setIsEditing(!!req);
     setEditPhoneError('');
+    setEditNameError('');
+    setEditAgeError('');
     setEditData({
       name: user.name, role: user.role, phone: user.phone || '', department: user.department || '',
       firstName: '', lastName: '', gender: '', age: '', civilStatus: '', team: '', capabilities: '',
@@ -652,18 +1044,38 @@ const ManageUsers: React.FC<ManageUsersProps> = ({ onEOCCreating, onUsersLoaded 
 
   const closeDetails = () => {
     if (isSavingEdit) return;
-    setShowDetailsModal(false); setDetailsUser(null); setIsEditing(false); setReviewRequest(null);
+    setShowDetailsModal(false); setDetailsUser(null); setIsEditing(false); setReviewRequest(null); setEditNameError(''); setEditAgeError('');
   };
 
   const handleSaveEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!detailsUser) return;
     const isEOC = detailsUser.userType === 'eoc';
-    const name = isEOC ? (editData.name || '').trim() : `${editData.firstName} ${editData.lastName}`.trim();
+    const name = isEOC ? (editData.name || '').trim() : `${(editData.firstName || '').trim()} ${(editData.lastName || '').trim()}`.trim();
 
     if (!name) return alert('❌ Name is required.');
+
+    // Name format validation (letters, spaces, hyphens, apostrophes only)
+    const namesToCheck = isEOC ? [editData.name || ''] : [editData.firstName || '', editData.lastName || ''];
+    if (namesToCheck.some(n => !NAME_REGEX.test(n.trim()))) {
+      setEditNameError(NAME_ERROR);
+      return alert(`❌ Invalid name. ${NAME_ERROR}.`);
+    }
+
     if (!editData.role?.trim()) return alert('❌ Role is required.');
     if (editData.phone && !/^\d{11}$/.test(editData.phone)) { setEditPhoneError('Must be exactly 11 digits'); return; }
+
+    // Age must be a whole number between 18 and 100 (only for responders)
+    if (!isEOC) {
+      const ageStr = String(editData.age ?? '').trim();
+      if (ageStr !== '') {
+        const ageNum = Number(ageStr);
+        if (!/^\d+$/.test(ageStr) || !Number.isInteger(ageNum) || ageNum < MIN_AGE) {
+          setEditAgeError(AGE_ERROR);
+          return;
+        }
+      }
+    }
 
     setIsSavingEdit(true);
     try {
@@ -682,7 +1094,7 @@ const ManageUsers: React.FC<ManageUsersProps> = ({ onEOCCreating, onUsersLoaded 
         updates.department = editData.department || 'Naga City EOC';
       } else {
         Object.assign(updates, {
-          firstName: editData.firstName || '', lastName: editData.lastName || '',
+          firstName: (editData.firstName || '').trim(), lastName: (editData.lastName || '').trim(),
           gender: editData.gender || '', age: editData.age || '',
           team: editData.team || '', station: editData.team || '',
           capabilities: editData.capabilities || '',
@@ -769,7 +1181,11 @@ const ManageUsers: React.FC<ManageUsersProps> = ({ onEOCCreating, onUsersLoaded 
     return map[role] || '#EEF1F8';
   };
 
-  const regeneratePassword = () => { const pw = generateStrongPassword(); setFormData(prev => ({ ...prev, password: pw, confirmPassword: pw })); };
+  const regeneratePassword = () => {
+    const pw = generateStrongPassword();
+    setFormData(prev => ({ ...prev, password: pw, confirmPassword: pw }));
+    clearFieldError('password'); clearFieldError('confirmPassword');
+  };
 
   const handleCopyCredentials = () => {
     if (!createdUser) return;
@@ -951,7 +1367,39 @@ const ManageUsers: React.FC<ManageUsersProps> = ({ onEOCCreating, onUsersLoaded 
         <div className="search-filter-container">
           <div className="search-filter-row">
             <div className="search-wrapper"><span className="search-icon">🔍</span><input type="text" placeholder="Search by name, role, email, or location..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="search-input" /></div>
-            <select className="filter-select" value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}><option value="all">All Roles</option>{uniqueRoles.filter(r => r !== 'all').map(r => <option key={r} value={r}>{r}</option>)}</select>
+
+            {/* ---------- Role filter (custom dropdown) ---------- */}
+            <div className="role-dd">
+              <button
+                type="button"
+                className={`role-dd-btn ${roleMenuOpen ? 'open' : ''}`}
+                onClick={() => setRoleMenuOpen(o => !o)}
+                aria-haspopup="listbox"
+                aria-expanded={roleMenuOpen}
+              >
+                <span>{roleFilter === 'all' ? 'All Roles' : roleFilter}</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+              </button>
+              {roleMenuOpen && (
+                <>
+                  <div className="role-dd-backdrop" onClick={() => setRoleMenuOpen(false)} />
+                  <ul className="role-dd-list" role="listbox">
+                    {uniqueRoles.map(r => (
+                      <li
+                        key={r}
+                        role="option"
+                        aria-selected={roleFilter === r}
+                        className={`role-dd-option ${roleFilter === r ? 'selected' : ''}`}
+                        onClick={() => { setRoleFilter(r); setRoleMenuOpen(false); }}
+                      >
+                        {r === 'all' ? 'All Roles' : r}
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+            </div>
+
             <div className="status-filter-buttons">
               <button className={`filter-btn ${statusFilter === 'all' ? 'active' : ''}`} onClick={() => setStatusFilter('all')}>All</button>
               <button className={`filter-btn ${statusFilter === 'active' ? 'active' : ''}`} onClick={() => setStatusFilter('active')}><span className="status-dot active-dot"></span>Active</button>
@@ -964,6 +1412,31 @@ const ManageUsers: React.FC<ManageUsersProps> = ({ onEOCCreating, onUsersLoaded 
           <table className="users-table">
             <thead><tr><th>USER</th><th>ROLE</th><th>STATUS</th><th>LOCATION</th><th>CONTACT</th><th>JOINED</th><th>ACTION</th></tr></thead>
             <tbody>
+              {/* ---------- Pending row: account waiting for the user to verify their email ---------- */}
+              {pendingUser && verifyStep === 'waiting' && (
+                <tr className="pending-row">
+                  <td>
+                    <div className="user-info">
+                      <div className="user-avatar-wrapper">
+                        <div className="user-avatar"><span>{getInitials(pendingUser.name)}</span></div>
+                      </div>
+                      <div className="user-details"><p className="user-name">{pendingUser.name}</p><p className="user-email">{pendingUser.email}</p></div>
+                    </div>
+                  </td>
+                  <td><span className="role-badge" style={{ backgroundColor: getRoleBadgeColor(pendingUser.role) }}>{pendingUser.role || 'No Role'}</span></td>
+                  <td><span className="mu-status is-pending"><span className="mu-status-dot"></span>PENDING</span></td>
+                  <td><div className="location-info"><span className="location-icon">📍</span>{pendingUser.department || 'N/A'}</div></td>
+                  <td><div className="contact-info"><span className="contact-icon">📞</span>{pendingUser.phone || 'N/A'}</div></td>
+                  <td><div className="joined-info"><span className="joined-icon">📅</span>{pendingUser.joinedDate || 'N/A'}</div></td>
+                  <td>
+                    <div className="action-buttons">
+                      <button type="button" className="pending-btn" title="Waiting for email verification — click to view" onClick={() => setShowVerifyModal(true)}>
+                        <span className="pending-btn-dot" />Pending
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              )}
               {currentUsers.map(user => (
                 <tr key={user.id}>
                   <td>
@@ -983,16 +1456,21 @@ const ManageUsers: React.FC<ManageUsersProps> = ({ onEOCCreating, onUsersLoaded 
                   <td><div className="contact-info"><span className="contact-icon">📞</span>{user.phone || 'N/A'}</div></td>
                   <td><div className="joined-info"><span className="joined-icon">📅</span>{user.joinedDate || 'N/A'}</div></td>
                   <td>
+                    {/* ---------- 3-dot menu button ---------- */}
                     <div className="action-buttons">
-                      <button className="action-btn view-btn" onClick={() => openDetails(user)} title="View / Edit details">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
-                        </svg>
+                      <button
+                        type="button"
+                        className="action-btn more-btn"
+                        title="Actions"
+                        aria-haspopup="true"
+                        aria-expanded={actionMenu?.id === user.id}
+                        onClick={(e) => {
+                          const r = e.currentTarget.getBoundingClientRect();
+                          setActionMenu(actionMenu?.id === user.id ? null : { id: user.id, top: r.bottom + 6, left: r.right });
+                        }}
+                      >
+                        <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="12" cy="19" r="2" /></svg>
                       </button>
-                      <button className={`action-btn status-toggle-btn ${user.status === 'active' ? 'deactivate-btn' : 'activate-btn'}`} onClick={() => handleToggleStatus(user)} title={user.status === 'active' ? 'Deactivate' : 'Activate'}>
-                        {user.status === 'active' ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10" /><line x1="4.93" y1="4.93" x2="19.07" y2="19.07" /></svg> : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /><polyline points="16 11 18 13 22 9" /></svg>}
-                      </button>
-                      <button className="action-btn delete-btn" onClick={() => handleDeleteUser(user)} title="Delete User"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
                     </div>
                   </td>
                 </tr>
@@ -1000,8 +1478,38 @@ const ManageUsers: React.FC<ManageUsersProps> = ({ onEOCCreating, onUsersLoaded 
             </tbody>
           </table>
         </div>
-        {filteredUsers.length === 0 && <div className="empty-state"><p>No users found</p></div>}
+        {filteredUsers.length === 0 && !pendingUser && <div className="empty-state"><p>No users found</p></div>}
       </div>
+
+      {/* ---------- 3-dot action popup (view/edit, activate/deactivate, delete) ---------- */}
+      {actionMenu && (() => {
+        const u = users.find(x => x.id === actionMenu.id);
+        if (!u) return null;
+        const close = () => setActionMenu(null);
+        return (
+          <>
+            <div className="action-menu-backdrop" onClick={close} />
+            <div className="action-menu" style={{ top: actionMenu.top, left: actionMenu.left }}>
+              <button type="button" className="action-btn view-btn" title="View / Edit details" onClick={() => { close(); openDetails(u); }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+              </button>
+              <button
+                type="button"
+                className={`action-btn status-toggle-btn ${u.status === 'active' ? 'deactivate-btn' : 'activate-btn'}`}
+                title={u.status === 'active' ? 'Deactivate' : 'Activate'}
+                onClick={() => { close(); handleToggleStatus(u); }}
+              >
+                {u.status === 'active'
+                  ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10" /><line x1="4.93" y1="4.93" x2="19.07" y2="19.07" /></svg>
+                  : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /><polyline points="16 11 18 13 22 9" /></svg>}
+              </button>
+              <button type="button" className="action-btn delete-btn" title="Delete User" onClick={() => { close(); handleDeleteUser(u); }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
+              </button>
+            </div>
+          </>
+        );
+      })()}
 
       {/* ---------- View / Edit user details modal ---------- */}
       {showDetailsModal && detailsUser && (() => {
@@ -1095,12 +1603,13 @@ const ManageUsers: React.FC<ManageUsersProps> = ({ onEOCCreating, onUsersLoaded 
                   </div>
                 </div>
               ) : (
-                <form onSubmit={handleSaveEdit}>
+                <form onSubmit={handleSaveEdit} noValidate>
                   {isEOC ? (
                     <div className="form-row">
                       <div className="form-group">
                         <label>Full name<span className="required">*</span></label>
-                        <input type="text" value={editData.name} onChange={setEdit('name')} required />
+                        <input type="text" className={editNameError ? 'has-error' : ''} value={editData.name} onChange={setEdit('name')} required />
+                        {editNameError && <span className="vot-field-hint error">{editNameError}</span>}
                       </div>
                       <div className="form-group">
                         <label>Department</label>
@@ -1112,11 +1621,12 @@ const ManageUsers: React.FC<ManageUsersProps> = ({ onEOCCreating, onUsersLoaded 
                       <div className="form-row">
                         <div className="form-group">
                           <label>First name<span className="required">*</span></label>
-                          <input type="text" value={editData.firstName} onChange={setEdit('firstName')} required />
+                          <input type="text" className={editNameError ? 'has-error' : ''} value={editData.firstName} onChange={setEdit('firstName')} required />
                         </div>
                         <div className="form-group">
                           <label>Last name<span className="required">*</span></label>
-                          <input type="text" value={editData.lastName} onChange={setEdit('lastName')} required />
+                          <input type="text" className={editNameError ? 'has-error' : ''} value={editData.lastName} onChange={setEdit('lastName')} required />
+                          {editNameError && <span className="vot-field-hint error">{editNameError}</span>}
                         </div>
                       </div>
                       <div className="form-row">
@@ -1130,7 +1640,16 @@ const ManageUsers: React.FC<ManageUsersProps> = ({ onEOCCreating, onUsersLoaded 
                         </div>
                         <div className="form-group">
                           <label>Age</label>
-                          <input type="number" min={18} max={80} value={editData.age} onChange={setEdit('age')} />
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            placeholder="e.g. 25"
+                            maxLength={3}
+                            value={editData.age}
+                            onChange={handleEditAgeChange}
+                            className={editAgeError ? 'has-error' : ''}
+                          />
+                          {editAgeError && <span className="vot-field-hint error">{editAgeError}</span>}
                         </div>
                       </div>
                       <div className="form-row">
@@ -1237,10 +1756,21 @@ const ManageUsers: React.FC<ManageUsersProps> = ({ onEOCCreating, onUsersLoaded 
       )}
 
       {showModal && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+        <div className="modal-overlay" onClick={closeAddModal}>
           <div className="modal-box" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header"><div className="modal-header-left"><div className="modal-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></div><div className="modal-title-section"><h3>Add {selectedUserType === 'eoc' ? 'EOC Personnel' : 'Responder'}</h3></div></div><button className="close-btn" onClick={() => setShowModal(false)}>✕</button></div>
-            <form onSubmit={handleAddUser}>
+            <div className="modal-header"><div className="modal-header-left"><div className="modal-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></div><div className="modal-title-section"><h3>Add {selectedUserType === 'eoc' ? 'EOC Personnel' : 'Responder'}</h3></div></div><button className="close-btn" onClick={closeAddModal}>✕</button></div>
+            {/* noValidate: our own validation (below) shows every problem at once instead of the browser's one-at-a-time tooltip */}
+            <form onSubmit={handleAddUser} noValidate>
+              {/* ---------- Validation summary ---------- */}
+              {formBanner && (
+                <div
+                  role="alert"
+                  style={{ background: '#FEF2F2', border: '1px solid #FCA5A5', color: '#B91C1C', borderRadius: 8, padding: '10px 14px', marginBottom: 14, fontSize: 13, fontWeight: 600, lineHeight: 1.5 }}
+                >
+                  ⚠️ {formBanner}
+                </div>
+              )}
+
               {/* ---------- Profile photo ---------- */}
               <div className="profile-upload-section">
                 <div className="profile-preview">
@@ -1267,7 +1797,15 @@ const ManageUsers: React.FC<ManageUsersProps> = ({ onEOCCreating, onUsersLoaded 
                   <div className="form-row">
                     <div className="form-group">
                       <label>Full name<span className="required">*</span></label>
-                      <input type="text" placeholder="e.g. Juan Dela Cruz" value={formData.name} onChange={setField('name')} required />
+                      <input
+                        type="text"
+                        placeholder="e.g. Juan Dela Cruz"
+                        value={formData.name}
+                        onChange={setField('name')}
+                        className={formErrors.name ? 'has-error' : ''}
+                        required
+                      />
+                      {renderError('name')}
                     </div>
                     {renderSelect('Status', 'status', ['Single', 'Married'])}
                   </div>
@@ -1277,11 +1815,27 @@ const ManageUsers: React.FC<ManageUsersProps> = ({ onEOCCreating, onUsersLoaded 
                   <div className="form-row">
                     <div className="form-group">
                       <label>First name<span className="required">*</span></label>
-                      <input type="text" placeholder="First name" value={formData.firstName} onChange={setField('firstName')} required />
+                      <input
+                        type="text"
+                        placeholder="First name"
+                        value={formData.firstName}
+                        onChange={setField('firstName')}
+                        className={formErrors.firstName ? 'has-error' : ''}
+                        required
+                      />
+                      {renderError('firstName')}
                     </div>
                     <div className="form-group">
                       <label>Last name<span className="required">*</span></label>
-                      <input type="text" placeholder="Last name" value={formData.lastName} onChange={setField('lastName')} required />
+                      <input
+                        type="text"
+                        placeholder="Last name"
+                        value={formData.lastName}
+                        onChange={setField('lastName')}
+                        className={formErrors.lastName ? 'has-error' : ''}
+                        required
+                      />
+                      {renderError('lastName')}
                     </div>
                   </div>
                   <div className="form-row">
@@ -1294,19 +1848,29 @@ const ManageUsers: React.FC<ManageUsersProps> = ({ onEOCCreating, onUsersLoaded 
                   </div>
                   <div className="form-row">
                     <div className="form-group">
-                      <label>Age</label>
-                      <input type="number" min={18} max={80} placeholder="Age" value={formData.age} onChange={setField('age')} />
+                      <label>Age<span className="required">*</span></label>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        placeholder="e.g. 25"
+                        maxLength={3}
+                        value={formData.age}
+                        onChange={handleAgeChange}
+                        className={formErrors.age ? 'has-error' : ''}
+                        required
+                      />
+                      {renderError('age')}
                     </div>
                     {renderSelect('Status', 'status', ['Single', 'Married'])}
                   </div>
                   <div className="form-row">
-                    <ComboField label="Role" value={formData.role} options={RESPONDER_ROLES} required onChange={(v) => setFormData(prev => ({ ...prev, role: v }))} />
+                    <ComboField label="Role" value={formData.role} options={RESPONDER_ROLES} required error={formErrors.role} onChange={(v) => updateForm('role', v)} />
                   </div>
 
                   <div className="credentials-section"><div className="credentials-divider">Team &amp; capabilities</div></div>
                   <div className="form-row">
-                    <ComboField label="Team" value={formData.team} options={TEAM_OPTIONS} onChange={(v) => setFormData(prev => ({ ...prev, team: v }))} />
-                    <ComboField label="Capabilities" value={formData.capabilities} options={CAPABILITIES_OPTIONS} onChange={(v) => setFormData(prev => ({ ...prev, capabilities: v }))} />
+                    <ComboField label="Team" value={formData.team} options={TEAM_OPTIONS} required error={formErrors.team} onChange={(v) => updateForm('team', v)} />
+                    <ComboField label="Capabilities" value={formData.capabilities} options={CAPABILITIES_OPTIONS} required error={formErrors.capabilities} onChange={(v) => updateForm('capabilities', v)} />
                   </div>
                 </div>
               )}
@@ -1316,13 +1880,32 @@ const ManageUsers: React.FC<ManageUsersProps> = ({ onEOCCreating, onUsersLoaded 
               <div className="form-row">
                 <div className="form-group">
                   <label>Email<span className="required">*</span></label>
-                  <input type="email" placeholder="name@gmail.com" value={formData.email} onChange={setField('email')} required />
-                  <small>Use the user's own, working email address.</small>
+                  <input
+                    type="email"
+                    placeholder="name@gmail.com"
+                    value={formData.email}
+                    onChange={setField('email')}
+                    className={formErrors.email ? 'has-error' : ''}
+                    required
+                  />
+                  {formErrors.email
+                    ? renderError('email')
+                    : <small>A verification link will be sent to this email.</small>}
                 </div>
                 <div className="form-group">
-                  <label>Mobile number</label>
-                  <input type="tel" inputMode="numeric" placeholder="09XXXXXXXXX" value={formData.phone} onChange={handlePhoneChange} className={phoneError ? 'has-error' : ''} />
-                  {phoneError && <span className="vot-field-hint error">{phoneError}</span>}
+                  <label>Mobile number<span className="required">*</span></label>
+                  <input
+                    type="tel"
+                    inputMode="numeric"
+                    placeholder="09XXXXXXXXX"
+                    value={formData.phone}
+                    onChange={handlePhoneChange}
+                    className={phoneError || formErrors.phone ? 'has-error' : ''}
+                    required
+                  />
+                  {phoneError
+                    ? <span className="vot-field-hint error">{phoneError}</span>
+                    : renderError('phone')}
                 </div>
               </div>
 
@@ -1331,7 +1914,7 @@ const ManageUsers: React.FC<ManageUsersProps> = ({ onEOCCreating, onUsersLoaded 
               <div className="form-row">
                 <div className="form-group">
                   <label>Password<span className="required">*</span></label>
-                  <div className="password-input-wrapper">
+                  <div className={`password-input-wrapper ${formErrors.password ? 'has-error' : ''}`}>
                     <input
                       type={showPassword ? 'text' : 'password'}
                       value={formData.password}
@@ -1342,13 +1925,15 @@ const ManageUsers: React.FC<ManageUsersProps> = ({ onEOCCreating, onUsersLoaded 
                     />
                     <button type="button" className="password-toggle-btn" onClick={() => setShowPassword(!showPassword)} aria-label="Toggle password visibility">{showPassword ? '🙈' : '👁'}</button>
                   </div>
+                  {renderError('password')}
                 </div>
                 <div className="form-group">
                   <label>Confirm password<span className="required">*</span></label>
-                  <div className="password-input-wrapper">
+                  <div className={`password-input-wrapper ${formErrors.confirmPassword ? 'has-error' : ''}`}>
                     <input type={showConfirmPassword ? 'text' : 'password'} value={formData.confirmPassword} onChange={setField('confirmPassword')} required />
                     <button type="button" className="password-toggle-btn" onClick={() => setShowConfirmPassword(!showConfirmPassword)} aria-label="Toggle confirm password visibility">{showConfirmPassword ? '🙈' : '👁'}</button>
                   </div>
+                  {renderError('confirmPassword')}
                 </div>
               </div>
 
@@ -1368,12 +1953,11 @@ const ManageUsers: React.FC<ManageUsersProps> = ({ onEOCCreating, onUsersLoaded 
 
               <div style={{ marginBottom: 4 }}>
                 <button type="button" className="regenerate-btn" onClick={regeneratePassword}>↻ Generate new password</button>
-                <small style={{ display: 'block', marginTop: 6, color: 'var(--ink-soft)' }}>12+ characters with uppercase, lowercase, number and symbol.</small>
               </div>
 
               <div className="modal-actions" style={{ padding: '20px 0 0' }}>
-                <button type="button" className="cancel-btn" onClick={() => setShowModal(false)}>Cancel</button>
-                <button type="submit" className="save-btn" disabled={isCreating || uploadingImage}>{isCreating || uploadingImage ? 'Creating...' : `Create ${selectedUserType === 'eoc' ? 'EOC Personnel' : 'Responder'}`}</button>
+                <button type="button" className="cancel-btn" onClick={closeAddModal}>Cancel</button>
+                <button type="submit" className="save-btn" disabled={isCreating || uploadingImage}>{isCreating || uploadingImage ? 'Sending verification...' : `Create ${selectedUserType === 'eoc' ? 'EOC Personnel' : 'Responder'}`}</button>
               </div>
             </form>
           </div>
@@ -1413,10 +1997,45 @@ const ManageUsers: React.FC<ManageUsersProps> = ({ onEOCCreating, onUsersLoaded 
         </div>
       )}
 
+      {/* ---------- Email verification popup (account is created after the user verifies) ---------- */}
+      {verifyStep === 'waiting' && showVerifyModal && pendingRef.current && (
+        <div className="modal-overlay">
+          <div className="modal-box" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 460 }}>
+            <div className="modal-header">
+              <div className="modal-header-left">
+                <div className="modal-title-section">
+                  <h3>Verify email first</h3>
+                  <p>The account is created only after the user verifies.</p>
+                </div>
+              </div>
+            </div>
+            <div style={{ padding: 20 }}>
+              <div style={{ background: '#FEF3C7', border: '1px solid #FCD34D', borderRadius: 8, padding: '12px 16px', marginBottom: 14 }}>
+                <p style={{ margin: 0, fontSize: 13, color: '#92400E' }}>📧 A verification link was sent to:</p>
+                <p style={{ margin: '6px 0 0', fontSize: 15, fontWeight: 700, color: '#92400E' }}>{pendingRef.current.email}</p>
+              </div>
+              <p style={{ fontSize: 13, margin: '0 0 8px' }}>
+                Ask the user to open the link (check Spam too). Keep this window open —
+                the account will be created automatically once they verify.
+              </p>
+              <p style={{ fontSize: 13, margin: '0 0 8px' }}>⏳ Waiting for verification…</p>
+              {verifyInfo && <div style={{ background: '#dcfce7', color: '#15803d', padding: '8px 12px', borderRadius: 6, fontSize: 13, marginBottom: 8 }}>{verifyInfo}</div>}
+              {verifyError && <div style={{ background: '#FEF2F2', color: '#DC2626', padding: '8px 12px', borderRadius: 6, border: '1px solid #FCA5A5', fontSize: 13, marginBottom: 8 }}>{verifyError}</div>}
+              <div className="modal-actions">
+                <button type="button" className="cancel-btn" onClick={cancelVerification}>Cancel</button>
+                <button type="button" className="cancel-btn" onClick={handleResendVerification} disabled={isResending}>{isResending ? 'Sending...' : 'Resend link'}</button>
+                {/* OK hides the popup; we keep waiting in the background and the table shows "Pending" */}
+                <button type="button" className="save-btn" onClick={() => { setShowVerifyModal(false); setVerifyError(''); setVerifyInfo(''); checkVerified(false); }}>OK</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showSuccessModal && createdUser && (
         <div className="modal-overlay" onClick={handleCloseSuccessModal}>
           <div className="modal-box success-modal" onClick={(e) => e.stopPropagation()}>
-             <div className="modal-header"><div className="modal-header-left"><div className="modal-icon success-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" strokeLinecap="round" strokeLinejoin="round"/><polyline points="22 4 12 14.01 9 11.01" strokeLinecap="round" strokeLinejoin="round"/></svg></div><div className="modal-title-section"><h3 style={{ color: '#86EFAC' }}>Account Created Successfully</h3><p>Please provide these credentials to the user.</p></div></div><button className="close-btn" onClick={handleCloseSuccessModal}>✕</button></div>
+             <div className="modal-header"><div className="modal-header-left"><div className="modal-icon success-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" strokeLinecap="round" strokeLinejoin="round"/><polyline points="22 4 12 14.01 9 11.01" strokeLinecap="round" strokeLinejoin="round"/></svg></div><div className="modal-title-section"><h3 style={{ color: '#86EFAC' }}>Account Created Successfully</h3><p>Email verified. Please provide these credentials to the user.</p></div></div><button className="close-btn" onClick={handleCloseSuccessModal}>✕</button></div>
             <div className="success-modal-body" style={{ padding: '20px' }}>
               <div className="credential-card"><div className="credential-item"><span className="credential-label">👤 Name</span><span className="credential-value">{createdUser.name}</span></div><div className="credential-item"><span className="credential-label">📧 Email</span><span className="credential-value">{createdUser.email}</span></div><div className="credential-item"><span className="credential-label">🔑 Password</span><span className="credential-value" style={{ fontFamily: 'monospace' }}>{createdUser.password}</span></div><div className="credential-item"><span className="credential-label">📋 Role</span><span className="credential-value">{createdUser.role}</span></div></div>
               <div className="success-actions" style={{ display: 'flex', gap: '10px', marginTop: '12px' }}><button className="copy-btn" onClick={handleCopyCredentials} style={{ flex: 1, padding: '10px 16px', background: '#3B6DF0', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>Copy Credentials</button><button className="copy-btn" onClick={handleDownloadTicket} style={{ flex: 1, padding: '10px 16px', background: '#0B1A3E', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>⬇ Download Ticket</button><button className="done-btn" onClick={handleCloseSuccessModal} style={{ padding: '10px 24px', background: '#0F1F4A', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>Done</button></div>

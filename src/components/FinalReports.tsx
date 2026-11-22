@@ -1,12 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import {
-  collection,
-  onSnapshot,
-  query,
-  orderBy,
-  writeBatch,
-  getDocs,
-} from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { firestore as db } from '../firebase';
 import '../css/FinalReports.css';
 
@@ -29,6 +22,7 @@ interface FinalReportsProps {
 }
 
 interface ReportDetails {
+  reportId: string;
   incidentEvent: string;
   incidentReportId: string;
   incidentType: string;
@@ -112,6 +106,49 @@ const STATUS_LABEL: Record<string, string> = {
 
 const CHECK_IN_OPTIONS = ['Base', 'Camp', 'Staging Area', 'ICP'];
 
+// Number of reports shown per page
+const PAGE_SIZE = 10;
+
+// --- Incident type filter (dropdown) ---
+const TYPE_FILTERS = [
+  'Flood Rescue',
+  'Firetruck',
+  'Road Assistance',
+  'Ambulance',
+  'Police',
+  'Fire',
+  'Flood',
+  'Crime',
+  'Medical',
+  'Accident',
+];
+const TYPE_FILTER_OPTIONS = [...TYPE_FILTERS, 'Other'];
+
+const TYPE_MATCHERS: Record<string, (t: string) => boolean> = {
+  'Flood Rescue': (t) => t.includes('flood') && t.includes('rescue'),
+  Firetruck: (t) => /fire\s?-?truck/.test(t),
+  'Road Assistance': (t) => t.includes('road'),
+  Ambulance: (t) => t.includes('ambulance'),
+  Police: (t) => /(police|pnp)/.test(t),
+  Fire: (t) => t.includes('fire') && !/fire\s?-?truck/.test(t),
+  Flood: (t) => t.includes('flood') && !t.includes('rescue'),
+  Crime: (t) => /(crime|theft|robbery|shooting|violence)/.test(t),
+  Medical: (t) => t.includes('medical'),
+  Accident: (t) => /(accident|crash|vehic)/.test(t),
+};
+
+// '' = all types; 'Other' = anything that matches none of the listed types
+const matchesTypeFilter = (type: string, filter: string) => {
+  if (!filter) return true;
+  const t = (type || '').toLowerCase();
+  if (filter === 'Other') return !TYPE_FILTERS.some((k) => TYPE_MATCHERS[k](t));
+  return TYPE_MATCHERS[filter] ? TYPE_MATCHERS[filter](t) : true;
+};
+
+// Lowercase and strip everything except letters/digits so that
+// "fr 20261121" still matches "FR-20261121-A1B2C3"
+const normId = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+
 // --- Icons ---
 const Icons = {
   download: (
@@ -145,14 +182,6 @@ const Icons = {
       <polyline points="9 18 15 12 9 6" />
     </svg>
   ),
-  trash: (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <polyline points="3 6 5 6 21 6" />
-      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-      <line x1="10" y1="11" x2="10" y2="17" />
-      <line x1="14" y1="11" x2="14" y2="17" />
-    </svg>
-  ),
   calendar: (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
@@ -160,13 +189,10 @@ const Icons = {
       <line x1="8" y1="2" x2="8" y2="6"></line>
       <line x1="3" y1="10" x2="21" y2="10"></line>
     </svg>
-  )
+  ),
 };
 
 // --- List helpers ---
-const shortId = (id: string) =>
-  id.length > 12 ? `${id.slice(0, 11)}…` : id;
-
 const initials = (name: string) =>
   name
     .split(/\s+/)
@@ -180,10 +206,12 @@ const typeClass = (type: string) => {
   const t = (type || '').toLowerCase();
   if (t.includes('flood')) return 'type-flood';
   if (t.includes('fire')) return 'type-fire';
-  if (t.includes('medical')) return 'type-medical';
+  if (t.includes('medical') || t.includes('ambulance')) return 'type-medical';
   if (t.includes('earthquake')) return 'type-earthquake';
   if (t.includes('typhoon') || t.includes('storm')) return 'type-typhoon';
   if (t.includes('landslide')) return 'type-landslide';
+  if (t.includes('police') || t.includes('crime') || t.includes('theft'))
+    return 'type-police';
   if (t.includes('vehic') || t.includes('accident') || t.includes('crash'))
     return 'type-accident';
   if (t.includes('rescue')) return 'type-rescue';
@@ -210,6 +238,9 @@ const toDateSafe = (v: any): Date | null => {
 
 // All report dates are shown in Philippine time, whatever the viewer's device uses
 const PH_TZ = 'Asia/Manila';
+
+// YYYY-MM-DD in Philippine time (matches what the list displays)
+const toPHYMD = (d: Date) => d.toLocaleDateString('en-CA', { timeZone: PH_TZ });
 
 const fmtDateTime = (d: Date | null) =>
   d
@@ -243,7 +274,7 @@ const CalendarPopover: React.FC<{
   onClose: () => void;
 }> = ({ value, onSelect, onClear, onClose }) => {
   const selected = value.length === 10 ? value : '';
-  const todayStr = toYMD(new Date());
+  const todayStr = toPHYMD(new Date());
 
   const [view, setView] = useState<Date>(() => {
     const base = selected ? new Date(selected + 'T00:00:00') : new Date();
@@ -396,7 +427,7 @@ const ResponderFinalReportForm: React.FC<{ d: ReportDetails }> = ({ d }) => {
           <div className="frd-org">NAGA READY · CDRRMO — Naga City</div>
           <h4 className="frd-title">Responder Final Report</h4>
         </div>
-        <span className="frd-tag">Responder Final Report</span>
+        <span className="frd-tag">{d.reportId}</span>
       </header>
 
       <FormSection n={1} title="Incident information">
@@ -502,13 +533,15 @@ const FinalReports: React.FC<FinalReportsProps> = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [view, setView] = useState<'list' | 'detail'>('list');
 
-  // Filter States
+  // Filter states
   const [, setDateFilterType] = useState<string>('all');
   const [singleDate, setSingleDate] = useState<string>('');
   const [showCustomPicker, setShowCustomPicker] = useState<boolean>(false);
+  const [typeFilter, setTypeFilter] = useState<string>('');
+  const [searchTerm, setSearchTerm] = useState<string>('');
 
-  const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
-  const [isDeleting, setIsDeleting] = useState<boolean>(false);
+  // Pagination
+  const [page, setPage] = useState<number>(1);
 
   useEffect(() => {
     let unsubscribe = () => {};
@@ -562,6 +595,9 @@ const FinalReports: React.FC<FinalReportsProps> = () => {
               Number(String(d.incidentId || '').replace(/\D/g, '')) || 0;
 
             const details: ReportDetails = {
+              // Filled in below once the unique report ID is generated
+              reportId: '',
+
               incidentEvent: str(
                 d.incidentEvent ||
                   d.incidentName ||
@@ -576,7 +612,7 @@ const FinalReports: React.FC<FinalReportsProps> = () => {
               ),
               incidentDate: str(d.incidentDate || fmtDate(submittedDate)),
               incidentLocation: str(d.location || d.incidentLocation),
-              // ✅ True when the final report came from a LoRa device
+              // True when the final report came from a LoRa device
               isLoRa:
                 d.isLoRa === true ||
                 [d.source, d.reportedBy, d.reporterName].some((v) =>
@@ -645,19 +681,15 @@ const FinalReports: React.FC<FinalReportsProps> = () => {
                 d.maleCount ??
                   d.male ??
                   (String(d.gender || '').toLowerCase() === 'male'
-                      ? (d.numberOfPersonnel ??
-                          d.personnelCount ??
-                          '1')
-                      : '')
+                    ? d.numberOfPersonnel ?? d.personnelCount ?? '1'
+                    : '')
               ),
               female: str(
                 d.femaleCount ??
                   d.female ??
                   (String(d.gender || '').toLowerCase() === 'female'
-                      ? (d.numberOfPersonnel ??
-                          d.personnelCount ??
-                          '1')
-                      : '')
+                    ? d.numberOfPersonnel ?? d.personnelCount ?? '1'
+                    : '')
               ),
               ageRange: str(d.ageRange || '20–45'),
               weightRange: str(d.weightRange || '60–80 kg'),
@@ -734,7 +766,9 @@ const FinalReports: React.FC<FinalReportsProps> = () => {
             };
 
             return {
-              id: `FR-${doc.id}`,
+              // Temporarily the raw Firestore doc id; replaced by the
+              // formatted report ID in the pass below.
+              id: doc.id,
               originalId: numericId,
               type: d.incidentType || d.incidentName || 'Unknown Incident',
               location:
@@ -764,7 +798,25 @@ const FinalReports: React.FC<FinalReportsProps> = () => {
             };
           });
 
-          setFirestoreCases(loaded);
+          // Give every report a unique, readable ID: FR-YYYYMMDD-XXXXXX
+          // (date in Philippine time + first characters of the Firestore doc id).
+          // If two IDs ever collide, more characters of the doc id are used.
+          const seen = new Set<string>();
+          const finalCases = loaded
+            .sort((a, b) => b.rawDate.getTime() - a.rawDate.getTime()) // newest first
+            .map((c) => {
+              const ymd = toPHYMD(c.rawDate).replace(/-/g, '');
+              let len = 6;
+              let rid = '';
+              do {
+                rid = `FR-${ymd}-${c.id.slice(0, len).toUpperCase()}`;
+                len++;
+              } while (seen.has(rid) && len <= c.id.length);
+              seen.add(rid);
+              return { ...c, id: rid, details: { ...c.details, reportId: rid } };
+            });
+
+          setFirestoreCases(finalCases);
           setIsLoading(false);
         },
         (err) => {
@@ -788,8 +840,6 @@ const FinalReports: React.FC<FinalReportsProps> = () => {
   const [selectedId, setSelectedId] = useState<string>(
     mappedIncidents[0]?.id || ''
   );
-  const [statusFilter, setStatusFilter] = useState<string>('');
-  const [searchTerm, setSearchTerm] = useState<string>('');
 
   useEffect(() => {
     if (!mappedIncidents.find((c) => c.id === selectedId)) {
@@ -810,7 +860,7 @@ const FinalReports: React.FC<FinalReportsProps> = () => {
     if (type === 'all') {
       setSingleDate('');
     } else if (type === 'today') {
-      setSingleDate(toYMD(now));
+      setSingleDate(toPHYMD(now));
     } else if (type === 'week') {
       const firstDay = new Date(
         now.getFullYear(),
@@ -828,18 +878,23 @@ const FinalReports: React.FC<FinalReportsProps> = () => {
   };
 
   const filteredIncidents = useMemo(() => {
+    const term = searchTerm.trim();
     return mappedIncidents.filter((i) => {
+      // Matches the report ID (case, dashes and "FR" prefix are forgiving),
+      // and still matches type / location / responder text.
       const matchesTerm =
-        !searchTerm ||
-        [i.id, i.type, i.location, i.responder]
+        !term ||
+        normId(i.id).includes(normId(term)) ||
+        [i.type, i.location, i.responder]
           .join(' ')
           .toLowerCase()
-          .includes(searchTerm.toLowerCase());
-      const matchesChip = !statusFilter || i.status === statusFilter;
+          .includes(term.toLowerCase());
+
+      const matchesCategory = matchesTypeFilter(i.type, typeFilter);
 
       let matchesDate = true;
       if (singleDate) {
-        const incDateStr = toYMD(i.rawDate);
+        const incDateStr = toPHYMD(i.rawDate);
 
         if (singleDate.length === 10) {
           // Single day strict match
@@ -851,9 +906,26 @@ const FinalReports: React.FC<FinalReportsProps> = () => {
         }
       }
 
-      return matchesTerm && matchesChip && matchesDate;
+      return matchesTerm && matchesCategory && matchesDate;
     });
-  }, [mappedIncidents, searchTerm, statusFilter, singleDate]);
+  }, [mappedIncidents, searchTerm, typeFilter, singleDate]);
+
+  // --- Pagination (10 per page) ---
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredIncidents.length / PAGE_SIZE)
+  );
+  const currentPage = Math.min(page, totalPages);
+  const pageStart = (currentPage - 1) * PAGE_SIZE;
+  const pagedIncidents = filteredIncidents.slice(
+    pageStart,
+    pageStart + PAGE_SIZE
+  );
+
+  // Return to page 1 whenever a filter changes
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm, typeFilter, singleDate]);
 
   const handleSelectIncident = (id: string) => {
     setSelectedId(id);
@@ -866,199 +938,96 @@ const FinalReports: React.FC<FinalReportsProps> = () => {
 
   const handlePrint = () => window.print();
 
-  // --- Clear All Functionality ---
-  const confirmClearAll = () => {
-    setShowDeleteModal(true);
-  };
-
-  const executeClearAll = async () => {
-    setIsDeleting(true);
-    try {
-      const reportsRef = collection(db, 'final_reports');
-      const snapshot = await getDocs(reportsRef);
-
-      const batches = [];
-      let currentBatch = writeBatch(db);
-      let count = 0;
-
-      snapshot.docs.forEach((doc) => {
-        currentBatch.delete(doc.ref);
-        count++;
-        if (count === 500) {
-          batches.push(currentBatch.commit());
-          currentBatch = writeBatch(db);
-          count = 0;
-        }
-      });
-
-      if (count > 0) {
-        batches.push(currentBatch.commit());
-      }
-
-      await Promise.all(batches);
-
-      handleDateTypeChange('all');
-      setStatusFilter('');
-      setSearchTerm('');
-      setShowDeleteModal(false);
-    } catch (error) {
-      console.error('Error clearing reports: ', error);
-      alert('Failed to delete reports. Please try again.');
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
   // ============ LIST VIEW ============
   if (view === 'list') {
     return (
       <div className="fr-page">
-        {/* Top bar */}
+        {/* Top bar: title + filter dropdown + search + date, all on one line */}
         <div className="fr-topbar">
           <div className="fr-topbar-title-group">
             <div className="fr-topbar-title-row">
               <h1 className="fr-title-main">Final Reports</h1>
+              <span className="fr-count">{filteredIncidents.length}</span>
             </div>
           </div>
 
-          <div className="fr-search">
-            {Icons.search}
-            <input
-              placeholder="Search cases…"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+          <div className="fr-toolbar">
+            <select
+              className="fr-select"
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              aria-label="Filter by incident type"
+            >
+              <option value="">All types</option>
+              {TYPE_FILTER_OPTIONS.map((o) => (
+                <option key={o} value={o}>
+                  {o}
+                </option>
+              ))}
+            </select>
+
+            <div className="fr-search">
+              {Icons.search}
+              <input
+                placeholder="Search by report ID…"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+
+            {/* Calendar date pill + popover */}
+            <div className="fr-date-wrap">
+              <div
+                className="fr-date-pill"
+                onClick={() => setShowCustomPicker((v) => !v)}
+              >
+                <span className="fr-date-icon">{Icons.calendar}</span>
+                <span className="fr-date-text">
+                  {singleDate && singleDate.length === 10
+                    ? new Date(singleDate + 'T00:00:00').toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })
+                    : singleDate || 'Select a date'}
+                </span>
+                {singleDate && (
+                  <button
+                    type="button"
+                    className="fr-date-clear"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDateTypeChange('all');
+                      setShowCustomPicker(false);
+                    }}
+                    title="Clear date"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+
+              {showCustomPicker && (
+                <CalendarPopover
+                  value={singleDate}
+                  onSelect={(ymd) => {
+                    setSingleDate(ymd);
+                    setDateFilterType('calendar');
+                    setShowCustomPicker(false);
+                  }}
+                  onClear={() => {
+                    handleDateTypeChange('all');
+                    setShowCustomPicker(false);
+                  }}
+                  onClose={() => setShowCustomPicker(false)}
+                />
+              )}
+            </div>
           </div>
         </div>
 
         {/* Full-width table */}
         <div className="fr-list-pane-full">
-          <div
-            className="fr-list-head"
-            style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: '16px',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px', flexShrink: 0 }}>
-              <h2 className="fr-list-title" style={{ margin: 0 }}>
-                Case queue
-                <span className="fr-count" style={{ marginLeft: '8px' }}>{filteredIncidents.length}</span>
-              </h2>
-              <p className="fr-list-sub" style={{ margin: 0 }}>
-                Select a case to view the final report
-              </p>
-            </div>
-
-            {/* Filter & Action Row */}
-            <div
-              className="fr-chip-row"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                background: 'var(--bg)',
-                border: '1px solid var(--line)',
-                borderRadius: '100px',
-                padding: '4px 6px',
-                height: '46px',
-                flexShrink: 0,
-              }}
-            >
-              {/* Calendar date pill + inline calendar popover */}
-              <div style={{ position: 'relative', marginRight: '4px' }}>
-                <div
-                  onClick={() => setShowCustomPicker((v) => !v)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    background: 'var(--forest)',
-                    color: '#fff',
-                    borderRadius: '100px',
-                    padding: '0 10px 0 14px',
-                    height: '36px',
-                    minWidth: '190px',
-                    boxSizing: 'border-box',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <span style={{ display: 'flex' }}>{Icons.calendar}</span>
-                  <span style={{ flex: 1, fontSize: '13.5px', fontWeight: 600, whiteSpace: 'nowrap' }}>
-                    {singleDate && singleDate.length === 10
-                      ? new Date(singleDate + 'T00:00:00').toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
-                        })
-                      : singleDate || 'Select a date'}
-                  </span>
-                  {singleDate && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDateTypeChange('all');
-                        setShowCustomPicker(false);
-                      }}
-                      style={{
-                        background: 'transparent',
-                        border: 'none',
-                        color: '#fff',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        padding: 0,
-                      }}
-                      title="Clear date"
-                    >
-                      ✕
-                    </button>
-                  )}
-                </div>
-
-                {showCustomPicker && (
-                  <CalendarPopover
-                    value={singleDate}
-                    onSelect={(ymd) => {
-                      setSingleDate(ymd);
-                      setDateFilterType('calendar');
-                      setShowCustomPicker(false);
-                    }}
-                    onClear={() => {
-                      handleDateTypeChange('all');
-                      setShowCustomPicker(false);
-                    }}
-                    onClose={() => setShowCustomPicker(false)}
-                  />
-                )}
-              </div>
-
-              {/* Clear All Button */}
-              <button
-                className="fr-chip"
-                style={{
-                  color: 'var(--alert)',
-                  background: 'var(--alert-soft)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  marginLeft: '4px',
-                  height: '36px',
-                  padding: '0 16px',
-                  fontSize: '13.5px',
-                  fontWeight: 700,
-                  whiteSpace: 'nowrap',
-                  border: 'none',
-                  borderRadius: '100px',
-                }}
-                onClick={confirmClearAll}
-              >
-                {Icons.trash} Clear All
-              </button>
-            </div>
-          </div>
-
           <div
             className="fr-list-items-full"
             role="table"
@@ -1079,7 +1048,7 @@ const FinalReports: React.FC<FinalReportsProps> = () => {
             )}
 
             {!isLoading &&
-              filteredIncidents.map((inc) => (
+              pagedIncidents.map((inc) => (
                 <div
                   key={inc.id}
                   className={`fr-row ${typeClass(inc.type)}`}
@@ -1096,7 +1065,7 @@ const FinalReports: React.FC<FinalReportsProps> = () => {
                   <div className="fr-c fr-c-id" role="cell">
                     <span className={`fr-dot status-${inc.status}`} />
                     <span className="fr-li-id" title={inc.id}>
-                      {shortId(inc.id)}
+                      {inc.id}
                     </span>
                   </div>
 
@@ -1141,42 +1110,40 @@ const FinalReports: React.FC<FinalReportsProps> = () => {
               </div>
             )}
           </div>
-        </div>
 
-        {/* --- CONFIRMATION MODAL --- */}
-        {showDeleteModal && (
-          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000 }}>
-            <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', maxWidth: '400px', width: '100%', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px', color: 'var(--alert)' }}>
-                <div style={{ background: 'var(--alert-soft)', padding: '8px', borderRadius: '50%', display: 'flex' }}>
-                  {Icons.trash}
-                </div>
-                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--ink)' }}>Clear All Reports?</h3>
-              </div>
-              <p style={{ margin: '0 0 24px 0', fontSize: '14px', color: 'var(--ink-soft)', lineHeight: 1.5 }}>
-                Are you sure you want to delete <strong>all</strong> final reports? This action cannot be undone and will permanently remove the data from the database.
-              </p>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
-                <button
-                  className="fr-btn"
-                  style={{ background: 'transparent', border: '1px solid var(--line)', color: 'var(--ink)' }}
-                  onClick={() => setShowDeleteModal(false)}
-                  disabled={isDeleting}
-                >
-                  Cancel
-                </button>
-                <button
-                  className="fr-btn"
-                  style={{ background: 'var(--alert)', color: '#fff' }}
-                  onClick={executeClearAll}
-                  disabled={isDeleting}
-                >
-                  {isDeleting ? 'Deleting...' : 'Yes, Delete All'}
-                </button>
-              </div>
+          {/* Pagination */}
+          <div className="fr-pager">
+            <span className="fr-pager-info">
+              {filteredIncidents.length === 0
+                ? 'No reports'
+                : `Showing ${pageStart + 1}–${Math.min(
+                    pageStart + PAGE_SIZE,
+                    filteredIncidents.length
+                  )} of ${filteredIncidents.length}`}
+            </span>
+            <div className="fr-pager-nav">
+              <button
+                type="button"
+                className="fr-btn fr-btn-secondary"
+                disabled={currentPage <= 1}
+                onClick={() => setPage(currentPage - 1)}
+              >
+                Previous
+              </button>
+              <span className="fr-pager-page">
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                type="button"
+                className="fr-btn fr-btn-secondary"
+                disabled={currentPage >= totalPages}
+                onClick={() => setPage(currentPage + 1)}
+              >
+                Next
+              </button>
             </div>
           </div>
-        )}
+        </div>
       </div>
     );
   }

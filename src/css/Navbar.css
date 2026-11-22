@@ -1,35 +1,71 @@
 /* ============================================================
-   TOP NAVBAR — Reserve-Ops Theme (All Navy Blue)
+   NAVBAR — Sidebar + Top Bar (Navy / White)
    ============================================================ */
 
-   .rops-header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    width: 100%;
-    box-sizing: border-box;
-    height: 64px;
-    display: flex;
-    align-items: center;
-    gap: 28px;
-    padding: 0 24px;
-    background-color: #0B1938;
-    color: #D6E0F5;
-    z-index: 1000;
-    font-family: 'Inter', sans-serif;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.18);
+   :root {
+    --rops-sidebar-w: 200px;
+    --rops-header-h: 64px;
+    --rops-navy: #0B1938;
+    --rops-blue: #3B6FD4;
+    --rops-blue-text: #2F63D0;
+    --rops-active-bg: #E4ECFB;
+    --rops-hover-bg: #F1F5FD;
+    --rops-line: #E6EBF5;
+  
+    /* ===== FONT SIZES (adjust these to scale the whole navbar) ===== */
+    --rops-font-brand: 13px;
+    --rops-font-brand-sub: 10px;
+    --rops-font-nav: 12.5px;
+    --rops-font-logout-name: 12px;
+    --rops-font-logout-role: 10px;
+    --rops-font-menu-title: 13.5px;
+    --rops-font-menu-desc: 11.5px;
+    --rops-font-hero-name: 15px;
+    --rops-font-hero-badge: 11px;
+    --rops-font-list: 12.5px;
+    --rops-font-input: 12.5px;
+    --rops-font-btn: 12.5px;
+    --rops-font-about-body: 12px;
+    --rops-font-about-feat: 12.5px;
+    --rops-font-about-sub: 11.5px;
+    --rops-font-modal-title: 22px;
+    --rops-font-modal-text: 15px;
+    --rops-font-modal-sub: 13px;
+    --rops-font-modal-btn: 14px;
   }
   
   /* ============================================================
-     BRAND (admin photo + admin name)
+     SIDEBAR
      ============================================================ */
   
+  .rops-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: var(--rops-sidebar-w);
+    display: flex;
+    flex-direction: column;
+    background: var(--rops-navy);
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 1001;
+    font-family: 'Inter', sans-serif;
+    box-sizing: border-box;
+    transition: width 0.25s ease;
+    overflow-x: hidden;
+  }
+  
+  /* ---------- brand (navy block, same height as the top bar) ---------- */
+  
   .rops-brand {
+    height: calc(var(--rops-header-h) + 28px);
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
+    padding: 0 14px;
+    background: var(--rops-navy);
     flex-shrink: 0;
+    box-sizing: border-box;
   }
   
   .rops-brand-mark {
@@ -40,24 +76,21 @@
   }
   
   .rops-brand-avatar {
-    width: 44px;
-    height: 44px;
+    width: 34px;
+    height: 34px;
     overflow: hidden;
     padding: 0;
-    border-radius: 13px;
-    background: transparent;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.06);
     border: 2px solid rgba(255, 255, 255, 0.18);
     box-sizing: border-box;
-    color: #fff;
-    font-weight: 700;
-    font-size: 17px;
   }
   
   .rops-brand-avatar img {
     width: 100%;
     height: 100%;
     object-fit: contain;
-    padding: 6px;
+    padding: 4px;
     box-sizing: border-box;
     display: block;
   }
@@ -67,12 +100,11 @@
   }
   
   .rops-brand-name {
-    max-width: 180px;
+    max-width: 100px;
     color: #fff;
-    font-size: 15px;
+    font-size: var(--rops-font-brand);
     font-weight: 700;
     line-height: 1.2;
-    letter-spacing: 0.1px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -81,154 +113,251 @@
   .rops-brand-sub {
     display: flex;
     align-items: center;
-    gap: 6px;
-    margin-top: 3px;
-    font-size: 11.5px;
+    gap: 4px;
+    margin-top: 2px;
+    font-size: var(--rops-font-brand-sub);
     color: #8FA3C8;
   }
   
   .rops-brand-sub::before {
     content: '';
-    width: 6px;
-    height: 6px;
+    width: 5px;
+    height: 5px;
     border-radius: 50%;
     background: #5BD68A;
-    box-shadow: 0 0 0 3px rgba(91, 214, 138, 0.18);
+    box-shadow: 0 0 0 2px rgba(91, 214, 138, 0.18);
   }
   
-  /* ============================================================
-     NAV LINKS
-     ============================================================ */
+  /* ---------- nav links ---------- */
   
   .rops-nav {
-    display: flex;
-    align-items: center;
-    gap: 4px;
     flex: 1;
-    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 16px 10px;
+    overflow-y: auto;
+    scrollbar-width: thin;
   }
   
   .rops-nav-item {
     position: relative;
     display: flex;
     align-items: center;
-    gap: 9px;
-    padding: 10px 14px;
-    border-radius: 11px;
-    font-size: 13px;
-    color: #B8C6E6;
-    font-weight: 500;
-    background: transparent;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 12px 10px 14px;
     border: none;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: background 0.2s ease, color 0.2s ease;
+    border-radius: 8px;
+    background: transparent;
+    color: #D6E0F5;
     font-family: inherit;
+    font-size: var(--rops-font-nav);
+    font-weight: 500;
+    text-align: left;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
   }
   
   .rops-nav-item svg {
-    width: 17px;
-    height: 17px;
+    width: 16px;
+    height: 16px;
     flex-shrink: 0;
+    color: #8FA3C8;
   }
   
   .rops-nav-item:hover {
-    background: rgba(255, 255, 255, 0.06);
-    color: #fff;
+    background: rgba(255, 255, 255, 0.08);
   }
   
   .rops-nav-item.active {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(59, 111, 212, 0.2);
     color: #fff;
-    font-weight: 600;
+    font-weight: 700;
   }
   
   .rops-nav-item.active svg {
     color: #fff;
   }
   
-  /* underline on the active tab */
-  .rops-nav-item.active::after {
-    content: '';
-    position: absolute;
-    left: 14px;
-    right: 14px;
-    bottom: -9px;
-    height: 3px;
-    border-radius: 3px 3px 0 0;
-    background: #6FA8FF;
+  /* icons are always outline-only (never filled) */
+  .rops-nav-item svg,
+  .rops-nav-item svg * {
+    fill: none !important;
   }
   
   .rops-nav-item:focus-visible,
-  .rops-profile-btn:focus-visible,
+  .rops-icon-btn:focus-visible,
   .rops-menu-toggle:focus-visible {
-    outline: 2px solid #9CC2FF;
+    outline: 2px solid #6FA8FF;
     outline-offset: 2px;
   }
   
   /* ============================================================
-     RIGHT SIDE
+     LOGOUT CARD (bottom of sidebar)
      ============================================================ */
+  
+  .rops-logout-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: calc(100% - 16px);
+    margin: 0 8px 12px;
+    padding: 10px 8px 10px 12px;
+    border: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    background: transparent;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    transition: background 0.2s ease, border-color 0.2s ease;
+  }
+  
+  .rops-logout-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 155, 122, 0.1);
+    color: #FF9B7A;
+    flex-shrink: 0;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+  
+  .rops-logout-icon svg {
+    width: 14px;
+    height: 14px;
+  }
+  
+  .rops-logout-card .rops-user-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1;
+  }
+  
+  .rops-logout-card .rops-user-name {
+    color: #fff;
+    font-size: var(--rops-font-logout-name);
+    font-weight: 700;
+    line-height: 1.3;
+    transition: color 0.2s ease;
+  }
+  
+  .rops-logout-card .rops-user-role {
+    color: #8FA3C8;
+    font-size: var(--rops-font-logout-role);
+    transition: color 0.2s ease;
+  }
+  
+  /* Hover states */
+  .rops-logout-card:hover {
+    background: rgba(229, 72, 77, 0.1);
+    border-top-color: transparent;
+  }
+  
+  .rops-logout-card:hover .rops-logout-icon {
+    background: #E5484D;
+    color: #fff;
+  }
+  
+  .rops-logout-card:hover .rops-user-name {
+    color: #FF9B7A;
+  }
+  
+  .rops-logout-card:hover .rops-user-role {
+    color: #FF9B7A;
+    opacity: 0.8;
+  }
+  
+  .rops-sidebar-backdrop {
+    display: none;
+  }
+  
+  /* ============================================================
+     TOP BAR
+     ============================================================ */
+  
+  .rops-header {
+    position: fixed;
+    top: 0;
+    left: var(--rops-sidebar-w);
+    right: 0;
+    height: var(--rops-header-h);
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 0 28px 0 24px;
+    background-color: var(--rops-navy);
+    color: #D6E0F5;
+    z-index: 1000;
+    font-family: 'Inter', sans-serif;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+    transition: left 0.25s ease;
+  }
   
   .rops-right {
     display: flex;
     align-items: center;
-    gap: 14px;
     margin-left: auto;
     flex-shrink: 0;
   }
-  
-  /* ============================================================
-     SETTINGS BUTTON + DROPDOWN (compact)
-     ============================================================ */
   
   .rops-profile {
     position: relative;
     display: flex;
     align-items: center;
-    gap: 14px;   /* space between the gear and the About icon */
+    gap: 14px;
   }
   
-  .rops-profile-btn {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 0;
-    border: none;
-    background: transparent;
-    cursor: pointer;
-    color: #B8C6E6;
-  }
+  /* ---------- round outlined icon buttons (gear + about) ---------- */
   
-  .rops-profile-btn .rops-chev {
-    width: 14px;
-    height: 14px;
-  }
-  
-  /* gear button */
-  .rops-settings-icon {
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    box-sizing: border-box;
-    display: flex;
+  .rops-icon-btn {
+    display: inline-flex;
     align-items: center;
     justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border-radius: 50%;
+    background: transparent;
+    border: 1.5px solid #6FA8FF;
     color: #fff;
-    transition: background 0.2s ease, transform 0.3s ease;
+    cursor: pointer;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
   }
   
-  .rops-settings-icon svg {
-    width: 19px;
-    height: 19px;
+  .rops-icon-btn svg {
+    width: 20px;
+    height: 20px;
+    display: block;
+    transition: transform 0.3s ease;
   }
   
-  .rops-settings-btn:hover .rops-settings-icon {
-    background: #3B6FD4;
+  .rops-icon-btn:hover,
+  .rops-icon-btn.open {
+    background: var(--rops-blue);
+    border-color: var(--rops-blue);
+  }
+  
+  .rops-settings-btn:hover svg,
+  .rops-settings-btn.open svg {
     transform: rotate(45deg);
   }
+  
+  /* ============================================================
+     SETTINGS DROPDOWN (compact)
+     ============================================================ */
   
   .rops-profile-menu {
     position: absolute;
@@ -237,7 +366,7 @@
     min-width: 220px;
     padding: 4px;
     border-radius: 16px;
-    background: #0B1938;
+    background: var(--rops-navy);
     border: 1px solid rgba(255, 255, 255, 0.12);
     box-shadow: 0 20px 48px rgba(0, 0, 0, 0.45);
   }
@@ -269,7 +398,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    font-size: 13.5px;
+    font-size: var(--rops-font-menu-title);
     font-weight: 700;
     color: #fff;
   }
@@ -286,7 +415,7 @@
   }
   
   .rops-set-desc {
-    font-size: 11.5px;
+    font-size: var(--rops-font-menu-desc);
     color: #8FA3C8;
     margin: 2px 0 8px 38px;
   }
@@ -320,7 +449,7 @@
   
   .rops-hero-name {
     max-width: 100%;
-    font-size: 15px;
+    font-size: var(--rops-font-hero-name);
     font-weight: 700;
     color: #fff;
     white-space: nowrap;
@@ -331,7 +460,7 @@
   .rops-hero-badge {
     padding: 3px 10px;
     border-radius: 999px;
-    font-size: 11px;
+    font-size: var(--rops-font-hero-badge);
     font-weight: 600;
     color: #9CC2FF;
     background: rgba(111, 168, 255, 0.14);
@@ -356,7 +485,7 @@
     gap: 12px;
     padding: 7px 0;
     border-bottom: 1px solid rgba(255, 255, 255, 0.07);
-    font-size: 12.5px;
+    font-size: var(--rops-font-list);
   }
   
   .rops-set-list li:last-child {
@@ -375,7 +504,6 @@
     word-break: break-all;
   }
   
-  /* email-change confirmation shown on the default view */
   .rops-email-notice {
     margin: 0 0 8px;
     line-height: 1.4;
@@ -390,7 +518,7 @@
     border-radius: 12px;
     background: rgba(255, 255, 255, 0.06);
     color: #fff;
-    font-size: 12.5px;
+    font-size: var(--rops-font-btn);
     font-weight: 600;
     font-family: inherit;
     cursor: pointer;
@@ -398,8 +526,8 @@
   }
   
   .rops-set-action:hover {
-    background: #3B6FD4;
-    border-color: #3B6FD4;
+    background: var(--rops-blue);
+    border-color: var(--rops-blue);
   }
   
   .rops-set-action-row {
@@ -408,7 +536,7 @@
     margin-top: 0;
   }
   
-  /* ---------- logout button ---------- */
+  /* ---------- logout button (inside dropdown) ---------- */
   
   .rops-profile-logout {
     width: 100%;
@@ -422,7 +550,7 @@
     background: rgba(255, 138, 92, 0.08);
     color: #FF9B7A;
     font-weight: 600;
-    font-size: 13px;
+    font-size: var(--rops-font-modal-btn);
     cursor: pointer;
     font-family: inherit;
     transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
@@ -474,7 +602,7 @@
   }
   
   .rops-edit-group label {
-    font-size: 11.5px;
+    font-size: var(--rops-font-menu-desc);
     color: #8FA3C8;
     font-weight: 600;
   }
@@ -485,7 +613,7 @@
     border-radius: 10px;
     border: 1px solid rgba(255, 255, 255, 0.16);
     background: rgba(255, 255, 255, 0.06);
-    font-size: 12.5px;
+    font-size: var(--rops-font-input);
     font-family: inherit;
     color: #fff;
     outline: none;
@@ -513,7 +641,7 @@
     flex: 1;
     padding: 7px 12px;
     border-radius: 10px;
-    font-size: 12.5px;
+    font-size: var(--rops-font-input);
     font-weight: 600;
     font-family: inherit;
     cursor: pointer;
@@ -532,7 +660,7 @@
   }
   
   .rops-btn-save {
-    background: #3B6FD4;
+    background: var(--rops-blue);
     color: #fff;
   }
   
@@ -559,7 +687,7 @@
   
   .pw-heading {
     margin-top: 0;
-    font-size: 11.5px;
+    font-size: var(--rops-font-menu-desc);
     font-weight: 700;
     color: #fff;
     line-height: 1.4;
@@ -577,7 +705,7 @@
   
   .pw-card label {
     margin-top: 2px;
-    font-size: 11.5px;
+    font-size: var(--rops-font-menu-desc);
     font-weight: 600;
     color: #8FA3C8;
   }
@@ -590,7 +718,7 @@
     border: 1px solid rgba(255, 255, 255, 0.16);
     background: rgba(255, 255, 255, 0.06);
     color: #fff;
-    font-size: 12.5px;
+    font-size: var(--rops-font-input);
     font-family: inherit;
     outline: none;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
@@ -620,7 +748,7 @@
     top: 0;
     bottom: 0;
     right: 4px;
-    margin: auto 0;          /* centers vertically, no transform needed */
+    margin: auto 0;
     width: 30px;
     height: 30px;
     padding: 0;
@@ -636,7 +764,6 @@
     transition: color 0.2s ease, background 0.2s ease;
   }
   
-  /* never move on hover / click / focus */
   .pw-eye-btn:hover,
   .pw-eye-btn:active,
   .pw-eye-btn:focus,
@@ -662,15 +789,13 @@
     outline-offset: 1px;
   }
   
-  /* one-line password rule (shown only while New Password is focused) */
   .pw-hint {
     margin: 0;
-    font-size: 11px;
+    font-size: var(--rops-font-about-sub);
     color: #9CC2FF;
     line-height: 1.4;
   }
   
-  /* forgot password: email + button on one row */
   .pw-reset-row {
     display: flex;
     gap: 6px;
@@ -687,21 +812,20 @@
     white-space: nowrap;
   }
   
-  /* messages */
   .rops-pw-error {
-    font-size: 11.5px;
+    font-size: var(--rops-font-menu-desc);
     color: #FF9B7A;
     font-weight: 600;
   }
   
   .rops-pw-success {
-    font-size: 11.5px;
+    font-size: var(--rops-font-menu-desc);
     color: #5BD68A;
     font-weight: 600;
   }
   
   /* ============================================================
-     MOBILE HAMBURGER (hidden on desktop)
+     MOBILE HEADER BUTTON (opens the drawer; hidden on desktop)
      ============================================================ */
   
   .rops-menu-toggle {
@@ -715,6 +839,12 @@
     cursor: pointer;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.2s ease;
+  }
+  
+  .rops-menu-toggle:hover {
+    background: rgba(255, 255, 255, 0.16);
   }
   
   .rops-menu-toggle svg {
@@ -723,7 +853,42 @@
   }
   
   /* ============================================================
-     LOGOUT MODAL  (navy, same as header)
+     SIDEBAR TOGGLE (inside the sidebar, on the brand row)
+     ============================================================ */
+  
+  .rops-sidebar-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    margin: 0 0 0 auto;
+    padding: 0;
+    border: none;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.2s ease;
+  }
+  
+  .rops-sidebar-toggle:hover {
+    background: rgba(255, 255, 255, 0.16);
+  }
+  
+  .rops-sidebar-toggle:focus-visible {
+    outline: 2px solid #6FA8FF;
+    outline-offset: 2px;
+  }
+  
+  .rops-sidebar-toggle svg {
+    width: 20px;
+    height: 20px;
+  }
+  
+  /* ============================================================
+     LOGOUT MODAL  (navy)
      ============================================================ */
   
   @keyframes fadeIn {
@@ -755,7 +920,7 @@
   }
   
   .logout-modal-content {
-    background: #0B1938;
+    background: var(--rops-navy);
     border-radius: 20px;
     padding: 36px 32px 32px;
     max-width: 420px;
@@ -792,21 +957,21 @@
   .logout-modal-content h2 {
     color: #fff;
     margin: 0 0 10px;
-    font-size: 22px;
+    font-size: var(--rops-font-modal-title);
     font-weight: 700;
     font-family: inherit;
   }
   
   .logout-modal-content p {
     color: #D6E0F5;
-    font-size: 15px;
+    font-size: var(--rops-font-modal-text);
     line-height: 1.6;
     margin: 0 0 6px;
   }
   
   .logout-modal-content .sub-text {
     color: #8FA3C8;
-    font-size: 13px;
+    font-size: var(--rops-font-modal-sub);
     margin-bottom: 26px;
   }
   
@@ -825,7 +990,7 @@
     background: rgba(255, 255, 255, 0.06);
     color: #fff;
     font-weight: 600;
-    font-size: 14px;
+    font-size: var(--rops-font-modal-btn);
     cursor: pointer;
     transition: all 0.25s ease;
     flex: 1;
@@ -841,10 +1006,10 @@
     padding: 12px 24px;
     border-radius: 100px;
     border: none;
-    background: #3B6FD4;
+    background: var(--rops-blue);
     color: #fff;
     font-weight: 600;
-    font-size: 14px;
+    font-size: var(--rops-font-modal-btn);
     cursor: pointer;
     transition: all 0.25s ease;
     flex: 1;
@@ -860,7 +1025,6 @@
     height: 17px;
   }
   
-  /* hover: turns red so the action feels final */
   .btn-logout:hover {
     background: #E5484D;
     transform: translateY(-1px);
@@ -877,122 +1041,10 @@
     outline-offset: 2px;
   }
   
-  /* ============================================================
-     LAYOUT OVERRIDES (sidebar removed)
-     ============================================================ */
-  
-  .app {
-    display: block !important;
-  }
-  
-  .app > .rops-header + .main-content {
-    margin-left: 0 !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    padding-top: 64px;
-    box-sizing: border-box;
-  }
-  
-  /* ============================================================
-     RESPONSIVE
-     ============================================================ */
-  
-  @media (max-width: 1100px) {
-    .rops-nav-item {
-      padding: 10px 11px;
-    }
-  }
-  
-  @media (max-width: 992px) {
-    .rops-header {
-      gap: 16px;
-      padding: 0 16px;
-    }
-    /* hide labels, keep icons */
-    .rops-nav-item span {
-      display: none;
-    }
-    .rops-nav-item {
-      padding: 10px 12px;
-    }
-  }
-  
-  @media (max-width: 768px) {
-    .rops-menu-toggle {
-      display: flex;
-    }
-  
-    .rops-brand-sub {
-      display: none;
-    }
-  
-    /* nav becomes a dropdown panel under the header */
-    .rops-nav {
-      position: absolute;
-      top: 64px;
-      left: 0;
-      right: 0;
-      flex-direction: column;
-      align-items: stretch;
-      gap: 4px;
-      padding: 12px 16px 16px;
-      background: #0B1938;
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
-      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.25);
-      display: none;
-    }
-  
-    .rops-nav.open {
-      display: flex;
-    }
-  
-    .rops-nav-item {
-      padding: 12px;
-    }
-  
-    .rops-nav-item span {
-      display: inline;
-    }
-  
-    .rops-nav-item.active::after {
-      display: none;
-    }
-  
-    .logout-modal-content {
-      padding: 30px 24px;
-    }
-  
-    .modal-actions {
-      flex-direction: column;
-    }
-  }
-  
-  @media (max-width: 480px) {
-    .rops-brand-avatar {
-      width: 38px;
-      height: 38px;
-    }
-    .rops-brand-name {
-      max-width: 110px;
-    }
-    .rops-settings-menu {
-      width: min(320px, calc(100vw - 32px));
-    }
-    .logout-modal-content {
-      padding: 24px 16px;
-      max-width: 95%;
-    }
-    .logout-modal-content h2 {
-      font-size: 20px;
-    }
-    .logout-modal-content p {
-      font-size: 14px;
-    }
-    .btn-cancel,
-    .btn-logout {
-      padding: 10px 20px;
-      font-size: 13px;
-    }
+  .btn-cancel:disabled,
+  .btn-logout:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
   }
   
   /* ============================================================
@@ -1006,7 +1058,7 @@
   
   .em-modal h2 {
     text-align: center;
-    font-size: 20px;
+    font-size: var(--rops-font-modal-title);
   }
   
   .em-modal .sub-text {
@@ -1027,63 +1079,15 @@
     padding-top: 16px;
   }
   
-  .btn-cancel:disabled,
-  .btn-logout:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-
   /* ============================================================
-     ABOUT PORTAL ICON + DROPDOWN  (keep this block LAST)
-     The info icon sits to the right of the gear and toggles the
-     "About NAGA READY" dropdown (same placement as Settings).
+     ABOUT DROPDOWN
      ============================================================ */
-
-  /* ---- the info icon ---- */
-  .rops-about-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 38px;
-    height: 38px;
-    padding: 0;
-    border-radius: 50%;
-    background: transparent;
-    border: 1.5px solid #3B6FD4;
-    color: #9CC2FF;
-    cursor: pointer;
-    flex-shrink: 0;
-    box-sizing: border-box;
-    transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
-  }
-
-  .rops-about-btn svg {
-    width: 19px;
-    height: 19px;
-    display: block;
-  }
-
-  .rops-about-btn:hover,
-  .rops-about-btn.open {
-    background: #3B6FD4;
-    color: #fff;
-  }
-
-  .rops-about-btn:hover {
-    transform: scale(1.05);
-  }
-
-  .rops-about-btn:focus-visible {
-    outline: 2px solid #9CC2FF;
-    outline-offset: 2px;
-  }
-
-  /* ---- the dropdown ---- */
+  
   .rops-about-menu,
   .rops-about-menu * {
     box-sizing: border-box;
   }
-
+  
   .rops-about-menu {
     position: absolute;
     top: calc(100% + 12px);
@@ -1093,7 +1097,7 @@
     max-height: calc(100vh - 90px);
     display: flex;
     flex-direction: column;
-    background: #0B1938;
+    background: var(--rops-navy);
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 16px;
     box-shadow: 0 20px 48px rgba(0, 0, 0, 0.45);
@@ -1102,7 +1106,7 @@
     overflow: hidden;
     z-index: 1100;
   }
-
+  
   .rops-about-head {
     display: flex;
     align-items: center;
@@ -1111,63 +1115,63 @@
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     flex-shrink: 0;
   }
-
+  
   .rops-about-logo {
     width: 34px;
     height: 34px;
     object-fit: contain;
     flex-shrink: 0;
   }
-
+  
   .rops-about-title {
-    font-size: 15px;
+    font-size: var(--rops-font-hero-name);
     font-weight: 700;
     line-height: 1.2;
   }
-
+  
   .rops-about-body {
     padding: 10px 14px 12px;
     overflow-y: auto;
-    font-size: 12px;
+    font-size: var(--rops-font-about-body);
     line-height: 1.55;
     color: #D6E0F5;
     scrollbar-width: thin;
     scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
   }
-
+  
   .rops-about-body::-webkit-scrollbar {
     width: 6px;
   }
-
+  
   .rops-about-body::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.25);
     border-radius: 6px;
   }
-
+  
   .rops-about-body p {
     margin: 0 0 10px;
   }
-
+  
   .rops-about-body strong {
     color: #fff;
   }
-
+  
   .rops-about-body h4 {
     margin: 12px 0 8px;
-    font-size: 12px;
+    font-size: var(--rops-font-about-body);
     font-weight: 700;
     letter-spacing: 0.04em;
     text-transform: uppercase;
     color: #6FA8FF;
   }
-
+  
   .rops-about-features {
     margin: 0;
     padding: 0;
     list-style: none;
     counter-reset: ab-feat;
   }
-
+  
   .rops-about-features li {
     counter-increment: ab-feat;
     position: relative;
@@ -1177,7 +1181,7 @@
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 10px;
   }
-
+  
   .rops-about-features li::before {
     content: counter(ab-feat);
     position: absolute;
@@ -1189,25 +1193,25 @@
     background: rgba(111, 168, 255, 0.18);
     border: 1px solid rgba(111, 168, 255, 0.4);
     color: #9CC2FF;
-    font-size: 11px;
+    font-size: var(--rops-font-about-sub);
     font-weight: 700;
     display: flex;
     align-items: center;
     justify-content: center;
   }
-
+  
   .rops-about-features li strong {
     display: block;
-    font-size: 12.5px;
+    font-size: var(--rops-font-about-feat);
     margin-bottom: 1px;
   }
-
+  
   .rops-about-features li span {
     display: block;
-    font-size: 11.5px;
+    font-size: var(--rops-font-about-sub);
     color: #8FA3C8;
   }
-
+  
   .rops-about-info {
     margin-top: 12px;
     padding: 2px 12px;
@@ -1215,39 +1219,186 @@
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 10px;
   }
-
+  
   .rops-about-row {
     display: flex;
     justify-content: space-between;
     gap: 14px;
     padding: 8px 0;
-    font-size: 12px;
+    font-size: var(--rops-font-about-body);
   }
-
+  
   .rops-about-row + .rops-about-row {
     border-top: 1px solid rgba(255, 255, 255, 0.08);
   }
-
+  
   .rops-about-row span {
     color: #8FA3C8;
     white-space: nowrap;
   }
-
+  
   .rops-about-row strong {
     text-align: right;
     font-weight: 600;
   }
-
+  
   .rops-about-foot {
     margin-top: 12px;
     padding-top: 10px;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
     text-align: center;
-    font-size: 11px;
+    font-size: var(--rops-font-about-sub);
     color: #6F84AD;
   }
-
+  
+  /* ============================================================
+     LAYOUT OVERRIDES (content sits right of the sidebar, under the top bar)
+     ============================================================ */
+  
+  .app {
+    display: block !important;
+  }
+  
+  .app > .rops-header + .main-content {
+    margin-left: var(--rops-sidebar-w) !important;
+    width: calc(100% - var(--rops-sidebar-w)) !important;
+    max-width: none !important;
+    padding-top: var(--rops-header-h);
+    box-sizing: border-box;
+    transition: margin-left 0.25s ease, width 0.25s ease;
+  }
+  
+  /* ============================================================
+     COLLAPSED SIDEBAR (desktop only) — icons only
+     ============================================================ */
+  
+  @media (min-width: 769px) {
+    body.rops-collapsed {
+      --rops-sidebar-w: 68px;
+    }
+  
+    /* brand: show only the logo */
+    body.rops-collapsed .rops-brand {
+      height: var(--rops-header-h);
+      justify-content: center;
+      padding: 0;
+    }
+  
+    body.rops-collapsed .rops-brand-text,
+    body.rops-collapsed .rops-brand-mark {
+      display: none;
+    }
+  
+    /* toggle: replaces the logo, centered in the rail */
+    body.rops-collapsed .rops-sidebar-toggle {
+      margin: 0;
+    }
+  
+    /* nav: icons only, centered */
+    body.rops-collapsed .rops-nav {
+      padding: 16px 8px;
+      overflow-x: hidden;
+    }
+  
+    body.rops-collapsed .rops-nav-item {
+      justify-content: center;
+      padding: 12px 0;
+      gap: 0;
+    }
+  
+    body.rops-collapsed .rops-nav-item span {
+      display: none;
+    }
+  
+    body.rops-collapsed .rops-nav-item svg {
+      width: 18px;
+      height: 18px;
+    }
+  
+    /* logout: icon only */
+    body.rops-collapsed .rops-logout-card {
+      justify-content: center;
+      padding: 10px 0;
+      gap: 0;
+    }
+  
+    body.rops-collapsed .rops-logout-card .rops-user-text {
+      display: none;
+    }
+  }
+  
+  /* ============================================================
+     RESPONSIVE
+     ============================================================ */
+  
+  @media (max-width: 768px) {
+    .rops-menu-toggle {
+      display: flex;
+    }
+  
+    .rops-header {
+      left: 0;
+      padding: 0 16px;
+    }
+  
+    /* sidebar becomes an off-canvas drawer */
+    .rops-sidebar {
+      transform: translateX(-100%);
+      transition: transform 0.28s ease;
+      box-shadow: none;
+    }
+  
+    .rops-sidebar.open {
+      transform: translateX(0);
+      box-shadow: 12px 0 32px rgba(0, 0, 0, 0.25);
+    }
+  
+    .rops-sidebar-backdrop {
+      display: block;
+      position: fixed;
+      inset: 0;
+      background: rgba(3, 8, 22, 0.5);
+      z-index: 1000;
+    }
+  
+    .app > .rops-header + .main-content {
+      margin-left: 0 !important;
+      width: 100% !important;
+    }
+  
+    .logout-modal-content {
+      padding: 30px 24px;
+    }
+  
+    .modal-actions {
+      flex-direction: column;
+    }
+  }
+  
   @media (max-width: 480px) {
+    .rops-settings-menu {
+      width: min(320px, calc(100vw - 32px));
+    }
+  
+    .logout-modal-content {
+      padding: 24px 16px;
+      max-width: 95%;
+    }
+  
+    .logout-modal-content h2 {
+      font-size: calc(var(--rops-font-modal-title) - 2px);
+    }
+  
+    .logout-modal-content p {
+      font-size: calc(var(--rops-font-modal-text) - 1px);
+    }
+  
+    .btn-cancel,
+    .btn-logout {
+      padding: 10px 20px;
+      font-size: calc(var(--rops-font-modal-btn) - 1px);
+    }
+  
     .rops-about-menu {
       position: fixed;
       top: 70px;
@@ -1256,12 +1407,12 @@
       width: auto;
       max-width: none;
     }
-
+  
     .rops-about-row {
       flex-direction: column;
       gap: 2px;
     }
-
+  
     .rops-about-row strong {
       text-align: left;
     }

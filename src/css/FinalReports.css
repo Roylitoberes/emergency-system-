@@ -227,7 +227,7 @@ body,
 
 .fr-list-pane-full .fr-list-head {
   flex-shrink: 0;
-  padding: 8px 28px;
+  padding: 8px 20px;
   border-bottom: 1px solid var(--line);
 }
 
@@ -311,12 +311,15 @@ body,
 
 /* ---------- Table ---------- */
 .fr-list-items-full {
-  /* Slightly adjusted column widths to accommodate larger text */
-  --fr-cols: 160px minmax(120px, 0.7fr) minmax(240px, 2fr) minmax(160px, 1fr)
-    170px 180px 32px;
+  /* Fluid columns: they shrink to fit the space beside the sidebar,
+     so the table never needs a horizontal scrollbar.
+     First column is wider so the full report ID (FR-YYYYMMDD-XXXXXX) fits. */
+  --fr-cols: minmax(170px, 1.1fr) minmax(110px, 0.8fr) minmax(150px, 2fr)
+    minmax(130px, 1.1fr) minmax(130px, 1fr) minmax(130px, 1.1fr) 24px;
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  overflow-x: hidden;
   background: var(--panel);
 }
 
@@ -325,8 +328,8 @@ body,
   display: grid;
   grid-template-columns: var(--fr-cols);
   align-items: center;
-  column-gap: 18px;
-  padding: 0 28px;
+  column-gap: 12px;
+  padding: 0 20px;
 }
 
 .fr-table-head {
@@ -396,6 +399,9 @@ body,
   font-family: 'Inter', sans-serif;
   letter-spacing: 0.02em;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .fr-dot {
@@ -424,6 +430,7 @@ body,
 .fr-type-badge {
   display: inline-block;
   max-width: 100%;
+  box-sizing: border-box;
   padding: 5px 12px;
   border-radius: 8px;
   background: var(--bg);
@@ -458,6 +465,7 @@ body,
 .fr-type-badge.type-landslide  { background: #EFE9E4; border-color: #CDBDB0; color: #6B4A36; }
 .fr-type-badge.type-accident   { background: #FFF0D9; border-color: #F2CD8B; color: #B3690A; }
 .fr-type-badge.type-rescue     { background: #EDE6FB; border-color: #C8B6F0; color: #5B35B8; }
+.fr-type-badge.type-police     { background: #E4E8F7; border-color: #B4BEE6; color: #2B3F9E; }
 .fr-type-badge.type-unknown    { background: #EEF0F4; border-color: #D3D8E2; color: #66708A; }
 
 /* ---------- Row color by incident type ---------- */
@@ -484,6 +492,7 @@ body,
 .fr-row.type-landslide  { --row-tint: #F6F2EF; --row-hover: #EBE2DB; --row-bar: #6B4A36; }
 .fr-row.type-accident   { --row-tint: #FFF7E8; --row-hover: #FFEBC9; --row-bar: #B3690A; }
 .fr-row.type-rescue     { --row-tint: #F4F0FD; --row-hover: #E8E0FA; --row-bar: #5B35B8; }
+.fr-row.type-police     { --row-tint: #F0F2FC; --row-hover: #E1E6F8; --row-bar: #2B3F9E; }
 .fr-row.type-unknown    { --row-tint: #F6F7FA; --row-hover: #EAECF2; --row-bar: #9AA3B8; }
 
 /* Location — single line with ellipsis */
@@ -523,24 +532,30 @@ body,
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  min-width: 0;
 }
 
 .fr-c-date {
   font-size: 13px;
   color: var(--ink-soft);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* Status pill */
+/* Status pill — shrinks to its column, shows "…" if it runs out of room */
 .fr-li-status {
-  display: inline-flex;
-  align-items: center;
-  font-size: 11px;
+  display: inline-block;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 10.5px;
   font-weight: 700;
-  padding: 5px 12px;
+  padding: 5px 10px;
   border-radius: 100px;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.03em;
   white-space: nowrap;
 }
 
@@ -580,6 +595,45 @@ body,
   font-size: 14px;
   color: var(--ink-soft);
   text-align: center;
+}
+
+/* ---------- Pagination footer ---------- */
+.fr-pager {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 20px;
+  background: var(--panel);
+  border-top: 1px solid var(--line);
+}
+
+.fr-pager-info,
+.fr-pager-page {
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.fr-pager-nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.fr-pager .fr-btn {
+  padding: 7px 14px;
+}
+
+.fr-pager .fr-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.fr-pager .fr-btn:disabled:hover {
+  border-color: var(--line);
+  color: var(--ink);
 }
 
 /* ============================================
@@ -838,7 +892,8 @@ body,
 /* ---------- Responsive ---------- */
 @media (max-width: 1100px) {
   .fr-list-items-full {
-    --fr-cols: 150px minmax(110px, 0.7fr) minmax(180px, 2fr) 170px 32px;
+    --fr-cols: minmax(170px, 1fr) minmax(100px, 0.8fr) minmax(140px, 2fr)
+      minmax(130px, 1fr) 24px;
   }
   .hide-md {
     display: none;
@@ -908,6 +963,11 @@ body,
 
   .fr-list-pane-full .fr-list-head {
     padding: 14px 18px;
+  }
+
+  .fr-pager {
+    padding-left: 18px;
+    padding-right: 18px;
   }
 }
 
@@ -1088,7 +1148,7 @@ body,
 
 
 /* ============================================
-   Calendar popover — append to the END of FinalReports.css
+   Calendar popover
    ============================================ */
 
 /* Let the popover escape the header (the table body scrolls on its own) */
@@ -1109,8 +1169,8 @@ body,
 
 .fr-cal {
   position: absolute;
-  top: 44px;
-  left: 0;
+  top: 46px;
+  right: 0;
   z-index: 9999;
   width: 320px;
   padding: 16px 18px 12px;
@@ -1211,4 +1271,97 @@ body,
 }
 .fr-cal-foot button:hover {
   text-decoration: underline;
+}
+
+
+/* ============================================
+   Toolbar: filter dropdown + search + date (one aligned row)
+   ============================================ */
+.fr-topbar-title-row .fr-count {
+  font-size: 13px;
+  padding: 3px 10px;
+}
+
+.fr-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.fr-toolbar .fr-search,
+.fr-select,
+.fr-date-pill {
+  height: 38px;
+  box-sizing: border-box;
+  border-radius: 10px;
+}
+
+.fr-select {
+  width: 190px;
+  padding: 0 34px 0 12px;
+  border: 1px solid var(--line);
+  background-color: var(--bg);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2366708A' stroke-width='3'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.fr-select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(59, 109, 240, 0.16);
+}
+
+.fr-date-wrap {
+  position: relative;
+}
+
+.fr-date-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 190px;
+  padding: 0 10px 0 12px;
+  background: var(--forest);
+  color: #fff;
+  cursor: pointer;
+}
+
+.fr-date-icon {
+  display: flex;
+}
+
+.fr-date-text {
+  flex: 1;
+  font-size: 13.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.fr-date-clear {
+  background: transparent;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  padding: 0;
+}
+
+@media (max-width: 900px) {
+  .fr-toolbar {
+    width: 100%;
+  }
+  .fr-toolbar .fr-search {
+    flex: 1 1 200px;
+    width: auto;
+  }
 }

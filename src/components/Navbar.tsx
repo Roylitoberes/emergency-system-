@@ -25,7 +25,7 @@ interface NavbarProps {
 /* ============================================================
    PASSWORD RULES (12+ chars, upper, lower, number, special)
    ============================================================ */
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // swap for /^[^\s@]+@gmail\.com$/i to allow Gmail only
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /** adminnagaready@gmail.com -> admi••••@gmail.com */
 const maskEmail = (email: string): string => {
@@ -40,6 +40,14 @@ const maskPhone = (phone: string): string => {
   if (!phone) return '';
   if (phone.length <= 6) return phone.charAt(0) + '•'.repeat(phone.length - 1);
   return `${phone.slice(0, 4)}${'•'.repeat(phone.length - 6)}${phone.slice(-2)}`;
+};
+
+/** "Roylito Oberes" -> "RO" */
+const getInitials = (name: string): string => {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return 'AD';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 };
 
 /** Posts an announcement to the Dashboard "Recent activity" feed */
@@ -119,7 +127,6 @@ const PasswordInput: React.FC<PasswordInputProps> = ({
         title={visible ? 'Hide password' : 'Show password'}
       >
         {visible ? (
-          // eye-off
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
             <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
@@ -127,7 +134,6 @@ const PasswordInput: React.FC<PasswordInputProps> = ({
             <line x1="1" y1="1" x2="23" y2="23" />
           </svg>
         ) : (
-          // eye
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
             <circle cx="12" cy="12" r="3" />
@@ -138,16 +144,28 @@ const PasswordInput: React.FC<PasswordInputProps> = ({
   );
 };
 
+const GEAR_PATH =
+  'M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z';
+
 const Navbar: React.FC<NavbarProps> = ({
   activeTab,
   setActiveTab,
   onLogout,
 }) => {
   const [showLogoutModal, setShowLogoutModal] = useState<boolean>(false);
-  const [menuOpen, setMenuOpen] = useState<boolean>(false); // mobile nav
-  const [profileOpen, setProfileOpen] = useState<boolean>(false); // settings dropdown
-  const [aboutOpen, setAboutOpen] = useState<boolean>(false); // about dropdown
+  const [menuOpen, setMenuOpen] = useState<boolean>(false);
+  const [profileOpen, setProfileOpen] = useState<boolean>(false);
+  const [aboutOpen, setAboutOpen] = useState<boolean>(false);
   const profileRef = useRef<HTMLDivElement>(null);
+
+  // --- SIDEBAR COLLAPSE (desktop: icons only) ---
+  const [collapsed, setCollapsed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('rops-sidebar-collapsed') === '1';
+    } catch {
+      return false;
+    }
+  });
 
   // --- PROFILE EDIT STATES ---
   const [isEditing, setIsEditing] = useState(false);
@@ -160,10 +178,9 @@ const Navbar: React.FC<NavbarProps> = ({
   const [emailNotice, setEmailNotice] = useState('');
 
   // --- EMAIL VERIFICATION POP-UP FLOW ---
-  // idle -> waiting (for the link to be opened) -> newPassword -> done
   const [emailStep, setEmailStep] = useState<'idle' | 'waiting' | 'newPassword' | 'done'>('idle');
   const [pendingEmail, setPendingEmail] = useState('');
-  const pendingPwRef = useRef(''); // current password, kept only while the flow is running
+  const pendingPwRef = useRef('');
   const checkingRef = useRef(false);
   const [vmError, setVmError] = useState('');
   const [mpNew, setMpNew] = useState('');
@@ -192,6 +209,25 @@ const Navbar: React.FC<NavbarProps> = ({
   const user = auth.currentUser;
   const userEmail = user?.email || 'admin';
 
+  // Apply the collapsed class on <body> so the header + page content follow the sidebar width
+  useEffect(() => {
+    document.body.classList.toggle('rops-collapsed', collapsed);
+    try {
+      localStorage.setItem('rops-sidebar-collapsed', collapsed ? '1' : '0');
+    } catch {
+      /* ignore storage errors */
+    }
+    return () => document.body.classList.remove('rops-collapsed');
+  }, [collapsed]);
+
+  const handleToggleSidebar = () => {
+    if (window.innerWidth <= 768) {
+      setMenuOpen((v) => !v); // mobile: open/close drawer
+    } else {
+      setCollapsed((v) => !v); // desktop: collapse to icons only
+    }
+  };
+
   const resetPasswordForm = () => {
     setPwOpen(false);
     setCurrentPw('');
@@ -205,14 +241,12 @@ const Navbar: React.FC<NavbarProps> = ({
     setResetSuccess('');
   };
 
-  // Sync state when user data changes or dropdown opens
   useEffect(() => {
     if (!user) return;
     setEditName(user.displayName || 'Administrator');
     setEditEmail('');
     setCurrentName(user.displayName || 'Administrator');
 
-    // Contact number lives in Firestore (manage_users), not in Firebase Auth
     let cancelled = false;
     (async () => {
       try {
@@ -222,7 +256,6 @@ const Navbar: React.FC<NavbarProps> = ({
         const phone = (data.phone as string) || '';
         setCurrentPhone(phone);
         if (!user.displayName && data.name) setCurrentName(data.name);
-        // keep Firestore email in sync once a new email has been verified
         if (user.email && data.email !== user.email) {
           await setDoc(doc(getFirestore(), 'manage_users', user.uid), { email: user.email }, { merge: true });
         }
@@ -235,14 +268,15 @@ const Navbar: React.FC<NavbarProps> = ({
     };
   }, [user, profileOpen]);
 
-  const navItems = [
+  /* ---------- SIDEBAR ITEMS ---------- */
+  const mainItems = [
     {
       id: 'dashboard',
       label: 'Dashboard',
       icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-          <path d="M3 10.5 12 3l9 7.5" />
-          <path d="M5 9.5V21h14V9.5" />
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M3 10.5 12 3l9 7.5V21H3z" />
+          <path d="M9.5 21v-6h5v6" />
         </svg>
       ),
     },
@@ -250,8 +284,10 @@ const Navbar: React.FC<NavbarProps> = ({
       id: 'incidents',
       label: 'Final Reports',
       icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-          <path d="M4 5h16M4 12h16M4 19h10" />
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="12" width="4" height="9" rx="1" />
+          <rect x="10" y="4" width="4" height="17" rx="1" />
+          <rect x="17" y="9" width="4" height="12" rx="1" />
         </svg>
       ),
     },
@@ -259,21 +295,24 @@ const Navbar: React.FC<NavbarProps> = ({
       id: 'users',
       label: 'Manage Users',
       icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-          <rect x="3.5" y="4.5" width="17" height="15" rx="2.5" />
-          <path d="M8 3v3M16 3v3M3.5 10h17" />
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="9" cy="8" r="3.5" />
+          <path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6" />
+          <path d="M16 4.6a3.5 3.5 0 0 1 0 6.8" />
+          <path d="M18 14.3c2.1.7 3.5 2.6 3.5 5.7" />
         </svg>
       ),
     },
   ];
 
-  // Close settings + about dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+      const target = e.target as HTMLElement;
+      if (target.closest && target.closest('[data-settings-trigger]')) return;
+      if (profileRef.current && !profileRef.current.contains(target as Node)) {
         setProfileOpen(false);
         setAboutOpen(false);
-        setIsEditing(false); // Reset edit mode
+        setIsEditing(false);
         setEmailPw('');
         setEmailError('');
         setEmailNotice('');
@@ -284,7 +323,6 @@ const Navbar: React.FC<NavbarProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Esc closes the About dropdown
   useEffect(() => {
     if (!aboutOpen) return;
     const onKey = (e: KeyboardEvent) => {
@@ -294,7 +332,24 @@ const Navbar: React.FC<NavbarProps> = ({
     return () => document.removeEventListener('keydown', onKey);
   }, [aboutOpen]);
 
+  const toggleSettings = () => {
+    setAboutOpen(false);
+    if (profileOpen) {
+      setIsEditing(false);
+      setEmailPw('');
+      setEmailError('');
+      setEmailNotice('');
+      resetPasswordForm();
+    }
+    setProfileOpen((v) => !v);
+    setMenuOpen(false);
+  };
+
   const handleNavClick = (id: string) => {
+    if (id === 'settings') {
+      toggleSettings();
+      return;
+    }
     setActiveTab(id);
     setMenuOpen(false);
   };
@@ -316,7 +371,6 @@ const Navbar: React.FC<NavbarProps> = ({
     }
   };
 
-  // --- SAVE PROFILE (name, contact number, and optional email change) ---
   const handleSaveProfile = async () => {
     if (!user) return;
     setEmailError('');
@@ -331,34 +385,28 @@ const Navbar: React.FC<NavbarProps> = ({
       if (!emailPw) return setEmailError('Enter your current password to change your email.');
     }
 
-    // Blank contact field = keep the current number
     const finalPhone = editPhone.trim() !== '' ? editPhone.trim() : currentPhone;
 
     setLoading(true);
     try {
-      // 1. Verify identity first (current password) before changing anything
       if (emailChanged) {
         const credential = EmailAuthProvider.credential(user.email!, emailPw);
         await reauthenticateWithCredential(user, credential);
       }
 
-      // 2. Update Firebase Auth profile (name)
       await updateProfile(user, { displayName: editName });
 
-      // 3. Update Firestore (manage_users collection)
       const db = getFirestore();
       await setDoc(doc(db, 'manage_users', user.uid), {
         name: editName,
         phone: finalPhone,
-        userType: 'admin', // lets App.tsx recognise this account as admin even after the email changes
+        userType: 'admin',
         updatedAt: new Date().toISOString()
       }, { merge: true });
 
-      // 4. Send verification link to the NEW email (email changes only after the link is opened)
       if (emailChanged) {
         await verifyBeforeUpdateEmail(user, newEmail);
 
-        // 📣 Announce on the Dashboard
         await logAdminActivity(
           'mail',
           'gold',
@@ -377,7 +425,6 @@ const Navbar: React.FC<NavbarProps> = ({
         alert('✅ Profile updated successfully!');
       }
 
-      // 5. Update UI state
       setCurrentName(editName || 'Administrator');
       setCurrentPhone(finalPhone);
       setEmailPw('');
@@ -409,7 +456,6 @@ const Navbar: React.FC<NavbarProps> = ({
     }
   };
 
-  // --- EMAIL FLOW: wait for the verification link, then ask for a new password ---
   const checkEmailVerified = async (manual = false): Promise<boolean> => {
     if (checkingRef.current) return false;
     checkingRef.current = true;
@@ -425,7 +471,6 @@ const Navbar: React.FC<NavbarProps> = ({
             return true;
           }
         } catch (err: any) {
-          // Firebase ends the old session once the new email is verified
           sessionExpired = [
             'auth/user-token-expired',
             'auth/invalid-user-token',
@@ -436,7 +481,6 @@ const Navbar: React.FC<NavbarProps> = ({
         sessionExpired = true;
       }
 
-      // Only try the new email when we know it has changed (or the admin pressed the button)
       if (sessionExpired || manual) {
         try {
           await signInWithEmailAndPassword(auth, pendingEmail, pendingPwRef.current);
@@ -481,7 +525,6 @@ const Navbar: React.FC<NavbarProps> = ({
 
     setMpLoading(true);
     try {
-      // Fresh session on the NEW email (confirms it is registered in Firebase Authentication)
       const cred = await signInWithEmailAndPassword(auth, pendingEmail, pendingPwRef.current);
       await updatePassword(cred.user, mpNew);
       await setDoc(
@@ -490,7 +533,6 @@ const Navbar: React.FC<NavbarProps> = ({
         { merge: true }
       );
 
-      // 📣 Announce on the Dashboard
       await logAdminActivity(
         'check-circle-2',
         'forest',
@@ -522,7 +564,6 @@ const Navbar: React.FC<NavbarProps> = ({
     }
   };
 
-  // --- CHANGE PASSWORD (current + new + confirm in one step) ---
   const handleUpdatePassword = async () => {
     if (!user || !user.email) return;
     setPwError('');
@@ -540,7 +581,6 @@ const Navbar: React.FC<NavbarProps> = ({
       await reauthenticateWithCredential(user, credential);
       await updatePassword(user, newPw);
 
-      // 📣 Announce on the Dashboard
       await logAdminActivity(
         'lock',
         'forest',
@@ -563,7 +603,6 @@ const Navbar: React.FC<NavbarProps> = ({
     }
   };
 
-  // --- FORGOT PASSWORD: send reset link by email ---
   const handleSendResetLink = async () => {
     setResetError('');
     setResetSuccess('');
@@ -574,7 +613,6 @@ const Navbar: React.FC<NavbarProps> = ({
     try {
       await sendPasswordResetEmail(auth, email);
 
-      // 📣 Announce on the Dashboard
       await logAdminActivity(
         'key-round',
         'clay',
@@ -593,10 +631,27 @@ const Navbar: React.FC<NavbarProps> = ({
     }
   };
 
+  const renderNavItem = (item: { id: string; label: string; icon: React.ReactNode }) => {
+    const isActive = item.id === 'settings' ? profileOpen : activeTab === item.id;
+    return (
+      <button
+        key={item.id}
+        data-id={item.id}
+        title={item.label}
+        className={`rops-nav-item ${isActive ? 'active' : ''}`}
+        onClick={() => handleNavClick(item.id)}
+        {...(item.id === 'settings' ? { 'data-settings-trigger': 'true' } : {})}
+      >
+        {item.icon}
+        <span>{item.label}</span>
+      </button>
+    );
+  };
+
   return (
     <>
-      <header className="rops-header">
-        {/* BRAND → shows the admin photo + admin name */}
+      {/* ============ LEFT SIDEBAR ============ */}
+      <aside className={`rops-sidebar ${menuOpen ? 'open' : ''}`}>
         <div className="rops-brand">
           <div className="rops-brand-mark rops-brand-avatar">
             <img src={logo} alt="Logo" />
@@ -605,50 +660,81 @@ const Navbar: React.FC<NavbarProps> = ({
             <div className="rops-brand-name">{currentName}</div>
             <div className="rops-brand-sub">Admin console</div>
           </div>
+
+          {/* SIDEBAR TOGGLE (same row as the brand) */}
+          <button
+            type="button"
+            className="rops-sidebar-toggle"
+            onClick={handleToggleSidebar}
+            aria-label="Toggle sidebar"
+            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              {menuOpen ? <path d="M6 6l12 12M18 6 6 18" /> : <path d="M4 7h16M4 12h16M4 17h16" />}
+            </svg>
+          </button>
         </div>
 
-        {/* NAV LINKS */}
-        <nav className={`rops-nav ${menuOpen ? 'open' : ''}`}>
-          {navItems.map((item) => (
-            <button
-              key={item.id}
-              className={`rops-nav-item ${activeTab === item.id ? 'active' : ''}`}
-              onClick={() => handleNavClick(item.id)}
-            >
-              {item.icon}
-              <span>{item.label}</span>
-            </button>
-          ))}
+        <nav className="rops-nav">
+          {mainItems.map(renderNavItem)}
         </nav>
 
-        {/* RIGHT SIDE */}
+        {/* LOGOUT CARD (bottom of sidebar) */}
+        <button
+          type="button"
+          className="rops-logout-card"
+          onClick={openLogoutModal}
+          aria-label="Logout"
+          title="Logout"
+        >
+          <span className="rops-logout-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <path d="m16 17 5-5-5-5" />
+              <path d="M21 12H9" />
+            </svg>
+          </span>
+          <span className="rops-user-text">
+            <span className="rops-user-name">Logout</span>
+          </span>
+        </button>
+      </aside>
+
+      {menuOpen && <div className="rops-sidebar-backdrop" onClick={() => setMenuOpen(false)} />}
+
+      {/* ============ TOP BAR ============ */}
+      <header className="rops-header">
+        <button
+          className="rops-menu-toggle"
+          onClick={handleToggleSidebar}
+          aria-label="Open navigation"
+          title="Open menu"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            {menuOpen ? <path d="M6 6l12 12M18 6 6 18" /> : <path d="M4 7h16M4 12h16M4 17h16" />}
+          </svg>
+        </button>
+
         <div className="rops-right">
           <div className="rops-profile" ref={profileRef}>
-            {/* SETTINGS ICON */}
             <button
-              className="rops-profile-btn rops-settings-btn"
-              onClick={() => {
-                setAboutOpen(false); // close the About dropdown
-                setProfileOpen((v) => !v);
-              }}
+              className={`rops-icon-btn rops-settings-btn ${profileOpen ? 'open' : ''}`}
+              data-settings-trigger="true"
+              onClick={toggleSettings}
               aria-haspopup="menu"
               aria-expanded={profileOpen}
               aria-label="Settings"
             >
-              <span className="rops-av rops-settings-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="3" />
-                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" />
-                </svg>
-              </span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="3" />
+                <path d={GEAR_PATH} />
+              </svg>
             </button>
 
-            {/* ABOUT PORTAL ICON (toggles the About dropdown) */}
             <button
               type="button"
-              className={`rops-about-btn ${aboutOpen ? 'open' : ''}`}
+              className={`rops-icon-btn rops-about-btn ${aboutOpen ? 'open' : ''}`}
               onClick={() => {
-                // close the Settings menu and reset its forms
                 setProfileOpen(false);
                 setIsEditing(false);
                 setEmailPw('');
@@ -662,7 +748,7 @@ const Navbar: React.FC<NavbarProps> = ({
               aria-label="About NAGA READY"
               title="About NAGA READY"
             >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="9" />
                 <path d="M12 11v5" />
                 <path d="M12 8h.01" />
@@ -671,14 +757,12 @@ const Navbar: React.FC<NavbarProps> = ({
 
             {profileOpen && (
               <div className="rops-profile-menu rops-settings-menu" role="menu">
-
                 {!isEditing ? (
-                  // --- DEFAULT VIEW: Admin Settings (name, email, contact, Edit Profile) + Logout ---
                   <div className="rops-set-section">
                     <div className="rops-set-title">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <circle cx="12" cy="12" r="3" />
-                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" />
+                        <path d={GEAR_PATH} />
                       </svg>
                       Admin Settings
                     </div>
@@ -721,7 +805,6 @@ const Navbar: React.FC<NavbarProps> = ({
                     </button>
                   </div>
                 ) : pwOpen ? (
-                  // --- PASSWORD VIEW: only the password forms (fits without scrolling) ---
                   <div className="rops-set-section">
                     <div className="pw-inline">
                       <div className="pw-heading">1. Change Password</div>
@@ -796,7 +879,6 @@ const Navbar: React.FC<NavbarProps> = ({
                   </div>
                 ) : (
                   <>
-                    {/* EDIT PROFILE FORM */}
                     <div className="rops-set-section">
                       <div className="rops-set-title">Edit Profile</div>
                       <div className="rops-edit-profile-form">
@@ -858,7 +940,6 @@ const Navbar: React.FC<NavbarProps> = ({
 
                     <div className="rops-set-divider" />
 
-                    {/* CHANGE PASSWORD BUTTON (only visible after clicking Edit Profile) */}
                     <div className="rops-set-section">
                       <button
                         className="rops-set-action rops-set-action-row"
@@ -873,7 +954,6 @@ const Navbar: React.FC<NavbarProps> = ({
 
                 <div className="rops-set-divider" />
 
-                {/* LOGOUT (always last) */}
                 <button className="rops-profile-logout" onClick={openLogoutModal} role="menuitem">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
@@ -885,7 +965,6 @@ const Navbar: React.FC<NavbarProps> = ({
               </div>
             )}
 
-            {/* ABOUT NAGA READY (dropdown) */}
             {aboutOpen && (
               <div className="rops-about-menu" role="dialog" aria-label="About NAGA READY">
                 <div className="rops-about-head">
@@ -925,21 +1004,9 @@ const Navbar: React.FC<NavbarProps> = ({
               </div>
             )}
           </div>
-
-          {/* Mobile hamburger */}
-          <button
-            className="rops-menu-toggle"
-            onClick={() => setMenuOpen((v) => !v)}
-            aria-label="Toggle navigation"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              {menuOpen ? <path d="M6 6l12 12M18 6 6 18" /> : <path d="M4 7h16M4 12h16M4 17h16" />}
-            </svg>
-          </button>
         </div>
       </header>
 
-      {/* LOGOUT MODAL */}
       {showLogoutModal && (
         <div className="logout-modal-overlay" onClick={closeLogoutModal}>
           <div className="logout-modal-content" onClick={(e) => e.stopPropagation()}>
@@ -974,7 +1041,6 @@ const Navbar: React.FC<NavbarProps> = ({
         </div>
       )}
 
-      {/* EMAIL VERIFICATION POP-UP */}
       {emailStep !== 'idle' && (
         <div className="logout-modal-overlay">
           <div className="logout-modal-content em-modal" onClick={(e) => e.stopPropagation()}>

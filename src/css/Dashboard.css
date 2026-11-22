@@ -72,9 +72,9 @@ html, body, #root {
 
 /* ----- .dashboard ----- */
 .dashboard {
-  position: absolute; /* Changed from fixed to absolute to respect parent containers */
-  top: var(--navbar-h);
-  left: 0;
+  position: absolute;
+  top: var(--rops-header-h, 64px);       /* exactly under the top bar */
+  left: var(--rops-sidebar-w, 200px);    /* exactly beside the sidebar */
   right: 0;
   bottom: 0;
   width: auto;
@@ -86,6 +86,7 @@ html, body, #root {
   display: flex;
   flex-direction: column;
   z-index: 1;
+  transition: left 0.25s ease;           /* follows the sidebar collapse */
 }
 
 /* ----- .dashboard-scroll (Main Grid) ----- */
